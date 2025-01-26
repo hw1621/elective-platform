@@ -1,0 +1,12 @@
+out/
+
+npm-debug.log
+yarn-error.log
+
+.env
+.env.local
+
+.DS_Store
+
+.git/
+.gitignore
