@@ -103,6 +103,6 @@ jobs:
       - name: Add impaas target
         run: tsuru target add impaas https://impaas.uk -s
       - name: Deploy app
-        run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a next-test
+        run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a elective-platform
 
           
