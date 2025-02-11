@@ -107,6 +107,8 @@ jobs:
     env:
       TSURU_TOKEN: ${{ secrets.TSURU_TOKEN }}
     steps:
+      - name: echo token
+        run: echo ${{ secrets.TSURU_TOKEN }}
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install tsuru CLI
