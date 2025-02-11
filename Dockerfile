@@ -9,7 +9,7 @@ RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npx prisma generate
+# RUN npx prisma generate
 RUN npm run build
 
 
@@ -23,8 +23,8 @@ COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder --chown=node:node /app/.next /app/.next
 COPY --from=builder /app/public /app/public
 COPY --from=builder /app/package.json /app/package.json
-COPY --from=builder /app/prisma /app/prisma
-COPY ./.env.prod /app/.env
+# COPY --from=builder /app/prisma /app/prisma
+# COPY ./.env.prod /app/.env
 
 RUN chown -R node:node /app
 USER node
