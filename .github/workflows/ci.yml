@@ -108,6 +108,8 @@ jobs:
         run: curl -fsSL "https://tsuru.io/get" | bash
       - name: Add impaas target
         run: tsuru target add impaas https://impaas.uk -s
+      - name: Echo image
+        run: echo ${{ env.IMAGE_NAME }}
       - name: Deploy app
         run: tsuru app deploy -i ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -a elective-platform
 
