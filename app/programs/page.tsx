@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import { Prisma } from "@prisma/client";
+import { useRouter } from "next/navigation";
 
 type ProgramWithAcademicYear = Prisma.programGetPayload<{
   include: {
@@ -12,6 +13,7 @@ type ProgramWithAcademicYear = Prisma.programGetPayload<{
 
 export default function Programs() {
   const [programs, setPrograms] = useState<ProgramWithAcademicYear[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     fetch("/api/programs")
@@ -20,6 +22,10 @@ export default function Programs() {
         setPrograms(data);
       });
   }, []);
+
+  const handleRowClick = (programId: number) => {
+    router.push(`/programs/${programId}`)
+  }
 
   return (
     <Container>
@@ -32,8 +38,7 @@ export default function Programs() {
         <Table>
           <TableHead>
             <TableRow style={{ backgroundColor: "#f5f5f5" }}>
-              <TableCell>ID</TableCell>
-              <TableCell>Title</TableCell>
+              <TableCell>Code</TableCell>
               <TableCell>Code</TableCell>
               <TableCell>Academic Year</TableCell>
               <TableCell>Suite</TableCell>
@@ -41,10 +46,14 @@ export default function Programs() {
           </TableHead>
           <TableBody>
             {programs.map((program) => (
-              <TableRow key={program.id} hover>
-                <TableCell>{program.id}</TableCell>
-                <TableCell>{program.title}</TableCell>
+              <TableRow 
+                key={program.id} 
+                hover 
+                onClick={() => handleRowClick(program.id)}
+                style={{ cursor: "pointer" }}
+              >
                 <TableCell>{program.code}</TableCell>
+                <TableCell>{program.title}</TableCell>
                 <TableCell>{program.academic_year?.name ?? "N/A"}</TableCell>
                 <TableCell>{program.suite ?? "N/A"}</TableCell>
               </TableRow>

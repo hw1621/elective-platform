@@ -13,7 +13,6 @@ export async function GET() {
         }
       },
     });
-    console.log(programs)
     return NextResponse.json(programs)    
   } catch (error) {
     console.error("Error fetching programs:", error);

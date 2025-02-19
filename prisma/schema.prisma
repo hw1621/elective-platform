@@ -25,6 +25,7 @@ model program {
   suite            String?     @db.VarChar(32)
    
   academic_year    academic_year  @relation(fields: [academic_year_id], references: [id])
+  module_instances module_instance[]
 }
 
 model academic_year {
@@ -36,7 +37,54 @@ model academic_year {
   modified_at DateTime    @updatedAt
   is_deleted  Boolean     @default(false)
 
-  programs program[]
+  programs           program[]
+  module_instances   module_instance[]
+
+  @@map("academic_year")
+}
+
+model module {
+  id          Int      @id @default(autoincrement())
+  code        String   @db.VarChar(64) @unique
+  title       String   @db.VarChar(128)
+  ects        Decimal?   @db.Decimal(4,2)
+  cats        Decimal?   @db.Decimal(4,2)
+  term        term? 
+  created_at  DateTime   @default(now())
+  modified_at DateTime   @default(now()) @updatedAt
+  is_deleted  Boolean    @default(false)
+
+  module_instances module_instance[]
+} 
+
+enum term {
+  SU
+  SP
+  AU
+  SEPT
+}
+
+enum course_type {
+  COMPULSORY
+  ELECTIVE
+  REQUIRED
+}
+
+model module_instance {
+  id                Int     @id @default(autoincrement())
+  module_id         Int   
+  academic_year_id  Int   
+  program_id        Int   
+  type              course_type @default(COMPULSORY)
+  created_at        DateTime    @default(now())
+  modified_at       DateTime    @default(now()) @updatedAt
+  is_deleted        Boolean     @default(false)
+
+  module        module          @relation(fields: [module_id], references: [id])
+  academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
+  program       program         @relation(fields: [program_id], references: [id])
+
+  @@map("module_instance")
 }
 
 
