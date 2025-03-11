@@ -26,6 +26,7 @@ model program {
    
   academic_year    academic_year  @relation(fields: [academic_year_id], references: [id])
   module_instances module_instance[]
+  rules            rule[]
 }
 
 model academic_year {
@@ -39,7 +40,7 @@ model academic_year {
 
   programs           program[]
   module_instances   module_instance[]
-
+  rules              rule[]
   @@map("academic_year")
 }
 
@@ -84,7 +85,49 @@ model module_instance {
   academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
   program       program         @relation(fields: [program_id], references: [id])
 
+  mappings      module_group_mapping[]
   @@map("module_instance")
+}
+
+model rule {
+  id                Int     @id @default(autoincrement())
+  program_id        Int   
+  module_group_id   Int  
+  academic_year_id  Int 
+  created_at        DateTime    @default(now())
+  modified_at       DateTime    @default(now()) @updatedAt
+  deleted_at        DateTime?   
+
+  academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
+  program       program         @relation(fields: [program_id], references: [id])
+  module_group  module_group    @relation(fields: [module_group_id], references: [id])
+}
+
+model module_group {
+    id                Int     @id @default(autoincrement())
+    name             String   @db.VarChar(512)
+    max_ects         Decimal?   @db.Decimal(4,2)
+    min_ects         Decimal?   @db.Decimal(4,2)
+
+    created_at       DateTime    @default(now())
+    modified_at      DateTime    @default(now()) @updatedAt
+    deleted_at       DateTime?   
+    
+    mappings         module_group_mapping[]
+    rules            rule[]
+}
+
+model module_group_mapping {
+    id                Int     @id @default(autoincrement())
+    module_group_id     Int     
+    module_instance_id  Int
+    created_at        DateTime    @default(now())
+    modified_at       DateTime    @default(now()) @updatedAt
+    deleted_at        DateTime?   
+
+    module_group      module_group     @relation(fields:[module_group_id], references: [id])
+    module_instance   module_instance  @relation(fields:[module_instance_id], references: [id])
+    @@unique([module_group_id, module_instance_id])
 }
 
 

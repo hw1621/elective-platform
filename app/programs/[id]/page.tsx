@@ -7,12 +7,14 @@ import { Button, Container, Paper, Table, TableBody, TableCell, TableContainer, 
 
 
 type ModulesInfo = {
-    id: number,
-    type: 'COMPULSORY' | 'REQUIRED' | 'ELECTIVE'
-    program: {
-        title: String
+    program_name: string,
+    module_group: {
+        name: string,
+        max_ects: number | null,
+        min_ects: number | null
     }
     module: {
+        id: number,
         code: string,
         title: string,
         ects: number | null,
@@ -25,23 +27,36 @@ export default function Modules( ) {
     const params = useParams();
     console.log(`check the params ${params}`)
     const programId = Number(params.id)
+    const academic_year_id = Number(1)
 
     useEffect(() => {
-        fetch(`/api/modules?program_id=${programId}`)
+        fetch(`/api/modules?program_id=${programId}&&academic_year_id=${academic_year_id}`)
             .then(response => response.json())
-            .then(data => setModules(data))
-    }, [programId]);
+            .then(data => {
+                console.log("Module data:", data)
+                data.map
+                setModules(data)
+            })
+    }, [programId, academic_year_id]);
 
-    const programName = modules.length > 0 ? modules[0].program.title : 'Loading...';
+
+    const programName = modules.length > 0 ? modules[0].program_name : 'Loading...';
 
     //Group modules based on their types and put them into the same section
     const grouped_modules = modules.reduce((groups, module) => {
-        groups[module.type] = groups[module.type] || [];
-        groups[module.type].push(module);
+        const group_name = module.module_group.name;
+        if (!groups[group_name]) {
+            groups[group_name] = {
+                max_ects: module.module_group.max_ects,
+                min_ects: module.module_group.min_ects,
+                modules: []
+            };
+        }
+        groups[group_name].modules.push(module);
         return groups;
-    }, {} as Record<string, ModulesInfo[]>);
+    }, {} as Record<string, { max_ects: number | null; min_ects: number | null; modules: ModulesInfo[] }>);
 
-    const moduleCategories = ['REQUIRED', 'COMPULSORY', 'ELECTIVE'];
+    const moduleCategories = Object.keys(grouped_modules)
 
     return (
         <Container>
@@ -66,8 +81,8 @@ export default function Modules( ) {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {grouped_modules[category].map((module) => (
-                                        <TableRow key={module.id}>
+                                    {grouped_modules[category].modules.map((module) => (
+                                        <TableRow key={module.module.id}>
                                             <TableCell>{module.module.code}</TableCell>
                                             <TableCell>{module.module.title}</TableCell>
                                             <TableCell>{module.module.term}</TableCell>
@@ -79,6 +94,14 @@ export default function Modules( ) {
                                             </TableCell>
                                         </TableRow>
                                     ))}
+                                    {
+                                        <TableRow>
+                                            <TableCell colSpan={4} />
+                                            <TableCell align="right" style={{ fontWeight: "bold"}}>
+                                                {grouped_modules[category].min_ects} {" ≤ "} {" Total ≤ "} {grouped_modules[category].max_ects}
+                                            </TableCell>
+                                        </TableRow>
+                                    }
                                 </TableBody>
                             </Table>
                         </TableContainer>

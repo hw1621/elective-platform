@@ -6,39 +6,67 @@ const prisma = new PrismaClient();
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const programId = searchParams.get("program_id");
+    const academic_year_id = searchParams.get("academic_year_id");
 
-    if (!programId) {
+    if (!programId || !academic_year_id) {
       return NextResponse.json({ error: "Missing program_id"}, { status: 400 });
     }
 
     try {
-      const module_instances = await prisma.module_instance.findMany({
+      const module_instances = await prisma.rule.findMany({
         where: { 
-          is_deleted: false,
-          program_id: parseInt(programId)
+          deleted_at: null,
+          program_id: parseInt(programId),
+          academic_year_id: parseInt(academic_year_id)
         },
         select: {
-          id: true,
-          type: true,
           program: {
             select: {
               title: true
             }
           },
-          module: {
+          module_group: {
             select: { 
-              code: true,
-              title: true,
-              ects: true,
-              term: true,
+              mappings: {
+                select: {
+                  module_group: {
+                    select: {
+                      name: true,
+                      max_ects: true,
+                      min_ects: true
+                    }
+                  },
+                  module_instance: {
+                    select: {
+                      module: {
+                        select: {
+                          id: true,
+                          code: true,
+                          title: true,
+                          ects: true,
+                          term: true,
+                        }
+                      }
+                    }
+                  }
+                }
+              } 
             }
           }
         }
       });
-      console.log(module_instances)
-      return NextResponse.json(module_instances)
+      const flattenedModules = module_instances.flatMap((rule) => 
+        { 
+          const program_name = rule.program.title
+          return rule.module_group.mappings.map((mapping) => ({
+            program_name: program_name,
+            module_group: mapping.module_group,
+            module: mapping.module_instance.module }))
+        })
+      console.log(flattenedModules)
+      return NextResponse.json(flattenedModules)
     } catch (error) {
-      console.error(`Error fetching modules of program id = ${programId}`)
+      console.error(error.message);
       return NextResponse.json(
         { error: `Failed to fetch modules of program id = ${programId}`},
         { status: 500 }
