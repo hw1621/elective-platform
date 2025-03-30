@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Prisma } from "@prisma/client";
 import { useParams } from "next/navigation";
-import { Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, FormControlLabel, Box } from "@mui/material";
 
 
 type ModulesInfo = {
@@ -24,6 +24,8 @@ type ModulesInfo = {
 
 export default function Modules( ) {
     const [modules, setModules] = useState<ModulesInfo[]>([]);
+    const [selectedModules, setSelectedModules] = useState<number[]>([]);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
     const params = useParams();
     console.log(`check the params ${params}`)
     const programId = Number(params.id)
@@ -56,6 +58,25 @@ export default function Modules( ) {
         return groups;
     }, {} as Record<string, { max_ects: number | null; min_ects: number | null; modules: ModulesInfo[] }>);
 
+    const handleToggleModule = (moduleId: number) => {
+        setSelectedModules(prev => prev.includes(moduleId) 
+            ? prev.filter(id => id !== moduleId) 
+            : [...prev, moduleId]);
+    }
+
+    const handleSubmit = () => {
+        const electiveSelectedIds = selectedModules.filter(id => {
+            const module = modules.find(m => m.module.id === id);
+            const groupName = module ? module.module_group.name.toLocaleLowerCase() : '';
+            return !groupName.includes("compulsory");
+        })
+        
+        // try {
+        //     const response = await fetch()
+        // }
+        setSnackbarOpen(true);
+    }
+
     const moduleCategories = Object.keys(grouped_modules)
 
     return (
@@ -81,19 +102,29 @@ export default function Modules( ) {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {grouped_modules[category].modules.map((module) => (
-                                        <TableRow key={module.module.id}>
-                                            <TableCell>{module.module.code}</TableCell>
-                                            <TableCell>{module.module.title}</TableCell>
-                                            <TableCell>{module.module.term}</TableCell>
-                                            <TableCell>{module.module.ects ? `${module.module.ects} ECTS` : 'N/A'}</TableCell>
-                                            <TableCell>
-                                                <Button variant="contained" color="primary" >
-                                                    Enroll
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                    {grouped_modules[category].modules.map((module) => {
+                                        const isCompulsory = category.toLocaleLowerCase().includes('compulsory');
+                                        return (
+                                            <TableRow key={module.module.id}>
+                                                <TableCell>{module.module.code}</TableCell>
+                                                <TableCell>{module.module.title}</TableCell>
+                                                <TableCell>{module.module.term}</TableCell>
+                                                <TableCell>{module.module.ects ? `${module.module.ects} ECTS` : 'N/A'}</TableCell>
+                                                <TableCell>
+                                                    <FormControlLabel
+                                                        control = {
+                                                            <Checkbox
+                                                            checked={isCompulsory || selectedModules.includes(module.module.id)}
+                                                            onChange={() => !isCompulsory && handleToggleModule(module.module.id)}
+                                                            disabled={isCompulsory}
+                                                            />
+                                                        }
+                                                        label=""
+                                                    />
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                     {
                                         <TableRow>
                                             <TableCell colSpan={4} />
@@ -108,6 +139,40 @@ export default function Modules( ) {
                     </Paper>
                 )
             ))}
+            <Box
+                sx={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    paddingTop: 4,
+                    paddingBottom: 4,
+                    gap: 2,
+                }}
+            >
+                <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={handleSubmit}
+                >
+                    Save
+                </Button>
+                <Button
+                    variant="contained"
+                    color="success"
+                    onClick={handleSubmit}
+                >
+                    Submit
+                </Button>
+            </Box>
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={3000}
+                onClose={() => setSnackbarOpen(false)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
+                    "Elective modules have been saved successfully"
+                </Alert>
+            </Snackbar>
         </Container>
     );
 
