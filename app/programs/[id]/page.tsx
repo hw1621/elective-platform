@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Prisma } from "@prisma/client";
 import { useParams } from "next/navigation";
 import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, FormControlLabel, Box } from "@mui/material";
 
@@ -198,7 +197,7 @@ export default function Modules( ) {
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
                 <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
-                    "Elective modules have been saved successfully"
+                    Elective modules have been saved successfully
                 </Alert>
             </Snackbar>
         </Container>
