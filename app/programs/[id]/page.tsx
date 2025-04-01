@@ -9,6 +9,7 @@ import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, 
 type ModulesInfo = {
     program_name: string,
     module_group: {
+        id: number,
         name: string,
         max_ects: number | null,
         min_ects: number | null
@@ -27,7 +28,6 @@ export default function Modules( ) {
     const [selectedModules, setSelectedModules] = useState<number[]>([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const params = useParams();
-    console.log(`check the params ${params}`)
     const programId = Number(params.id)
     const academic_year_id = Number(1)
 
@@ -35,7 +35,6 @@ export default function Modules( ) {
         fetch(`/api/modules?program_id=${programId}&&academic_year_id=${academic_year_id}`)
             .then(response => response.json())
             .then(data => {
-                console.log("Module data:", data)
                 data.map
                 setModules(data)
             })
@@ -43,8 +42,9 @@ export default function Modules( ) {
 
 
     const programName = modules.length > 0 ? modules[0].program_name : 'Loading...';
-
-    //Group modules based on their types and put them into the same section
+    
+    //Group modules based on their elections group and put them into the same section
+    //GroupName : { max_ects, min_ects, modules: {module_id, module_code, module_title, ects, term }[] }
     const grouped_modules = modules.reduce((groups, module) => {
         const group_name = module.module_group.name;
         if (!groups[group_name]) {
@@ -64,17 +64,45 @@ export default function Modules( ) {
             : [...prev, moduleId]);
     }
 
-    const handleSubmit = () => {
-        const electiveSelectedIds = selectedModules.filter(id => {
-            const module = modules.find(m => m.module.id === id);
-            const groupName = module ? module.module_group.name.toLocaleLowerCase() : '';
-            return !groupName.includes("compulsory");
-        })
-        
-        // try {
-        //     const response = await fetch()
-        // }
-        setSnackbarOpen(true);
+    const handleSubmit = async() => {
+        const selections = Object.values(grouped_modules).map((group) => {
+            const selectedModulesInGroup = group.modules.filter(module => 
+                selectedModules.includes(module.module.id)
+            ).map(module => ({
+                id: module.module.id,
+                ects: module.module.ects
+            }))
+
+            return {
+                group_id: group.modules[0].module_group.id,
+                selected_modules: selectedModulesInGroup
+            };
+        }).filter(selection => selection.selected_modules.length > 0);
+
+        try {
+            const response = await fetch('/api/programs/check', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    program_id: programId,
+                    academic_year_id: academic_year_id,
+                    selections: selections,
+                }),
+            });
+            const data = await response.json();
+            console.log(data);
+            if (!response.ok) {
+                alert("Module selection is invalid:\n" + data.errors.map((e: {message: string}) => e.message).join("\n"));
+                return;
+            }
+
+            setSnackbarOpen(true);
+        } catch (error) {
+            console.error("Error submitting selected modules:", error);
+            alert("An error occurred while submitting the selected modules, please try later");
+        }
     }
 
     const moduleCategories = Object.keys(grouped_modules)

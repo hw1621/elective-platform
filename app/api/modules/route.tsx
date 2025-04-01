@@ -1,9 +1,9 @@
 import { PrismaClient, term } from "@prisma/client";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest} from "next/server";
 
 const prisma = new PrismaClient();
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const programId = searchParams.get("program_id");
     const academic_year_id = searchParams.get("academic_year_id");
@@ -31,6 +31,7 @@ export async function GET(request: Request) {
                 select: {
                   module_group: {
                     select: {
+                      id: true,
                       name: true,
                       max_ects: true,
                       min_ects: true
@@ -66,7 +67,7 @@ export async function GET(request: Request) {
       console.log(flattenedModules)
       return NextResponse.json(flattenedModules)
     } catch (error) {
-      console.error(error.message);
+      console.error((error as Error).message);
       return NextResponse.json(
         { error: `Failed to fetch modules of program id = ${programId}`},
         { status: 500 }
