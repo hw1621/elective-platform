@@ -21,7 +21,7 @@ model program {
   academic_year_id Int      
   created_at       DateTime    @default(now())
   modified_at      DateTime    @updatedAt
-  is_deleted       Boolean     @default(false)
+  deleted_at       DateTime?
   suite            String?     @db.VarChar(32)
    
   academic_year    academic_year  @relation(fields: [academic_year_id], references: [id])
@@ -36,7 +36,7 @@ model academic_year {
   end_date    DateTime?   
   created_at  DateTime    @default(now())
   modified_at DateTime    @updatedAt
-  is_deleted  Boolean     @default(false)
+  deleted_at  DateTime?
 
   programs           program[]
   module_instances   module_instance[]
@@ -53,7 +53,7 @@ model module {
   term        term? 
   created_at  DateTime   @default(now())
   modified_at DateTime   @default(now()) @updatedAt
-  is_deleted  Boolean    @default(false)
+  deleted_at  DateTime?
 
   module_instances module_instance[]
 } 
@@ -79,7 +79,7 @@ model module_instance {
   type              course_type @default(COMPULSORY)
   created_at        DateTime    @default(now())
   modified_at       DateTime    @default(now()) @updatedAt
-  is_deleted        Boolean     @default(false)
+  deleted_at        DateTime?
 
   module        module          @relation(fields: [module_id], references: [id])
   academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
@@ -96,7 +96,7 @@ model rule {
   academic_year_id  Int 
   created_at        DateTime    @default(now())
   modified_at       DateTime    @default(now()) @updatedAt
-  deleted_at        DateTime?   
+  deleted_at        DateTime?
 
   academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
   program       program         @relation(fields: [program_id], references: [id])

@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 export async function GET() {
   try {
     const programs = await prisma.program.findMany({
-      where: { is_deleted: false },
+      where: { deleted_at: null },
       include: { 
         academic_year: {
           select: { name: true }
