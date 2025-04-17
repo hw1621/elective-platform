@@ -39,21 +39,43 @@ model academic_year {
   deleted_at  DateTime?
 
   programs           program[]
+  modules            module[]
   module_instances   module_instance[]
   rules              rule[]
   @@map("academic_year")
 }
 
 model module {
-  id          Int      @id @default(autoincrement())
-  code        String   @db.VarChar(64) @unique
-  title       String   @db.VarChar(128)
-  ects        Decimal?   @db.Decimal(4,2)
-  cats        Decimal?   @db.Decimal(4,2)
-  term        term? 
-  created_at  DateTime   @default(now())
-  modified_at DateTime   @default(now()) @updatedAt
-  deleted_at  DateTime?
+  id             Int      @id @default(autoincrement())
+  code           String   @db.VarChar(64) @unique
+  lecturer       String?   @db.VarChar(256)
+  department     String?   @db.VarChar(32)
+  employee_type  String?   @db.VarChar(32)
+  subject_area   String?   @db.VarChar(32)
+  lead_program   String?   @db.VarChar(32)
+  eligible_cohorts String?  @db.VarChar(512)
+  term           term?    
+  role           String?   @db.VarChar(32)
+  file_name      String?   @db.VarChar(512)
+  title          String   @db.VarChar(256)
+  brief_description  String?   @db.Text
+  ects           Decimal?   @db.Decimal(4,2)
+  cats           Decimal?   @db.Decimal(4,2)
+  FHEQ_level     String?     @db.VarChar(8)
+  delivery_mode  String?     @db.VarChar(32)
+  learning_outcome String?   @db.Text 
+  module_content   String?   @db.Text
+  learn_teach_approach  String?  @db.Text
+  assessment     String?     @db.Text
+  reading_list   String?     @db.Text
+  suite          String?   @db.VarChar(32)
+  academic_year_id Int
+
+  academic_year academic_year @relation(fields: [academic_year_id], references: [id])
+       
+  created_at     DateTime   @default(now())
+  modified_at    DateTime   @default(now()) @updatedAt
+  deleted_at     DateTime?
 
   module_instances module_instance[]
 } 
@@ -63,6 +85,7 @@ enum term {
   SP
   AU
   SEPT
+  TBC
 }
 
 enum course_type {
