@@ -99,7 +99,6 @@ model module_instance {
   module_id         Int   
   academic_year_id  Int   
   program_id        Int   
-  type              course_type @default(COMPULSORY)
   created_at        DateTime    @default(now())
   modified_at       DateTime    @default(now()) @updatedAt
   deleted_at        DateTime?
