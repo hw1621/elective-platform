@@ -63,38 +63,28 @@ export default function ModuleTable() {
 
     const totalPages = Math.ceil(totalCount / pageSize);
     return (
-        <div className="p-4">
-          <Table>
-            <TableHeader className="bg-gray-100">
-               <TableRow className="bg-gray-100 text-gray-700">
-                <TableHead className="w-[100px]">Code</TableHead>
-                <TableHead className="w-[100px]">Lecturer</TableHead>
-                <TableHead className="w-[100px]">Department</TableHead>
-                <TableHead className="w-[100px]">Employee Type</TableHead>
-                <TableHead className="w-[100px]">Subject Area</TableHead>
-                <TableHead className="w-[100px]">Lead Program</TableHead>
-                <TableHead className="w-[100px]">Eligible Cohorts</TableHead>
-                <TableHead className="w-[100px]">Term</TableHead>
-                <TableHead className="w-[100px]">Role</TableHead>
-                <TableHead className="w-[100px]">File Name</TableHead>
-                <TableHead className="w-[100px]">Title</TableHead>
-                <TableHead className="w-[100px]">Brief Description</TableHead>
-                <TableHead className="w-[100px]">ECTS</TableHead>
-                <TableHead className="w-[100px]">CATS</TableHead>
-                <TableHead className="w-[100px]">FHEQ Level</TableHead>
-                <TableHead className="w-[100px]">Delivery Mode</TableHead>
-                <TableHead className="w-[100px]">Learning Outcome</TableHead>
-                <TableHead className="w-[100px]">Module Content</TableHead>
-                <TableHead className="w-[100px]">Learn Teach Approach</TableHead>
-                <TableHead className="w-[100px]">Assessment</TableHead>
-                <TableHead className="w-[100px]">Reading List</TableHead>
-                <TableHead className="w-[100px]">Suite</TableHead>
-              </TableRow>
+        <div>
+          <Table className="table-fixed border border-gray-300">
+            <TableHeader>
+                <TableRow className="bg-gray-300">
+                    {[
+                    "Code", "Lecturer", "Department", "Employee Type", "Subject Area", "Lead Program",
+                    "Eligible Cohorts", "Term", "Role", "File Name", "Title", "Brief Description",
+                    "ECTS", "CATS", "FHEQ Level", "Delivery Mode", "Learning Outcome", "Module Content",
+                    "Learn Teach Approach", "Assessment", "Reading List", "Suite"
+                    ].map((header, idx) => (
+                    <TableHead
+                        key={idx}
+                        className="px-4 py-2 w-[140px] font-semibold text-gray-700"
+                    >
+                        {header}
+                    </TableHead>
+                    ))}
+                </TableRow>
             </TableHeader>
             <TableBody>
               {modules.map((module) => (
                 <TableRow key={module.id}>
-                  <TableCell className="w-[100px]">{module.id}</TableCell>
                   <TableCell className="w-[100px]">{module.code}</TableCell>
                   <TableCell className="w-[100px]">{module.lecturer}</TableCell>
                   <TableCell className="w-[100px]">{module.department}</TableCell>
