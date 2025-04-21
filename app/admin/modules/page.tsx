@@ -8,10 +8,8 @@ import {
     TableHead,
     TableCell,
   } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
 import { Select, SelectContent } from "@/components/ui/select"
 import { SelectItem, SelectTrigger, SelectValue } from "@radix-ui/react-select";
-import { Tab } from "@mui/material";
 
 
 type Module = {
@@ -45,7 +43,7 @@ export default function ModuleTable() {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [totalCount, setTotalCount] = useState(0);
-    const [academic_year_id, setAcademicYearId] = useState(1);
+    const [academic_year_id] = useState(1);
 
     useEffect(() => {   
         const fetchModule = async () => {

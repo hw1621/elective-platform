@@ -34,7 +34,6 @@ export default function Modules( ) {
         fetch(`/api/modules?program_id=${programId}&&academic_year_id=${academic_year_id}`)
             .then(response => response.json())
             .then(data => {
-                data.map
                 setModules(data)
             })
     }, [programId, academic_year_id]);
