@@ -8,7 +8,10 @@ import {
     TableHead,
     TableCell,
   } from "@/components/ui/table"
-  import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent } from "@/components/ui/select"
+import { SelectItem, SelectTrigger, SelectValue } from "@radix-ui/react-select";
+import { Tab } from "@mui/material";
 
 
 type Module = {
@@ -37,15 +40,16 @@ type Module = {
     suite: string;
 }
 
-export default function ModuleTable({academic_year_id}: {academic_year_id: number}) {
+export default function ModuleTable() {
     const [modules, setModules] = useState<Module[]>([]);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [totalCount, setTotalCount] = useState(0);
+    const [academic_year_id, setAcademicYearId] = useState(1);
 
     useEffect(() => {   
         const fetchModule = async () => {
-            const response = await fetch(`api/modules/all?academic_year_id=${academic_year_id}&page=${page}&page_size=${pageSize}`);
+            const response = await fetch(`/api/modules/all?academic_year_id=${academic_year_id}&page=${page}&page_size=${pageSize}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch modules");
             }
@@ -54,90 +58,140 @@ export default function ModuleTable({academic_year_id}: {academic_year_id: numbe
             setTotalCount(data.totalCount);
             setPage(data.page);
         }
+        fetchModule()
     }, [academic_year_id, page, pageSize]);
-    const data = fetch("api/modules/all");
-
-    const handlePrevPage = () => {
-        setPage((prevPage) => Math.max(prevPage - 1, 1));
-    };
-    const handleNextPage = () => {
-        setPage((prevPage) => Math.min(prevPage + 1, Math.ceil(totalCount / pageSize)));
-    };
 
     const totalPages = Math.ceil(totalCount / pageSize);
-
     return (
         <div className="p-4">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-[100px]">id</TableHead>
-                        <TableHead className="w-[100px]">Code</TableHead>
-                        <TableHead className="w-[100px]">Lecturer</TableHead>
-                        <TableHead className="w-[100px]">Department</TableHead>
-                        <TableHead className="w-[100px]">Employee Type</TableHead>
-                        <TableHead className="w-[100px]">Subject Area</TableHead>
-                        <TableHead className="w-[100px]">Lead Program</TableHead>
-                        <TableHead className="w-[100px]">Eligible Cohorts</TableHead>
-                        <TableHead className="w-[100px]">Term</TableHead>
-                        <TableHead className="w-[100px]">Role</TableHead>
-                        <TableHead className="w-[100px]">File Name</TableHead>
-                        <TableHead className="w-[100px]">Title</TableHead>
-                        <TableHead className="w-[100px]">Brief Description</TableHead>
-                        <TableHead className="w-[100px]">ECTS</TableHead>
-                        <TableHead className="w-[100px]">CATS</TableHead>
-                        <TableHead className="w-[100px]">FHEQ Level</TableHead>
-                        <TableHead className="w-[100px]">Delivery Mode</TableHead>
-                        <TableHead className="w-[100px]">Learning Outcome</TableHead>
-                        <TableHead className="w-[100px]">Module Content</TableHead>
-                        <TableHead className="w-[100px]">Learn Teach Approach</TableHead>
-                        <TableHead className="w-[100px]">Assessment</TableHead>
-                        <TableHead className="w-[100px]">Reading List</TableHead>
-                        <TableHead className="w-[100px]">Suite</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {modules.map((module) => (
-                        <TableRow key={module.id}>
-                            <TableCell className="w-[100px]">{module.id}</TableCell>
-                            <TableCell className="w-[100px]">{module.code}</TableCell>
-                            <TableCell className="w-[100px]">{module.lecturer}</TableCell>
-                            <TableCell className="w-[100px]">{module.department}</TableCell>
-                            <TableCell className="w-[100px]">{module.employee_type}</TableCell>
-                            <TableCell className="w-[100px]">{module.subject_area}</TableCell>
-                            <TableCell className="w-[100px]">{module.lead_program}</TableCell>
-                            <TableCell className="w-[100px]">{module.eligible_cohorts}</TableCell>
-                            <TableCell className="w-[100px]">{module.term}</TableCell>
-                            <TableCell className="w-[100px]">{module.role}</TableCell>
-                            <TableCell className="w-[100px]">{module.file_name}</TableCell>
-                            <TableCell className="w-[100px]">{module.title}</TableCell>
-                            <TableCell className="w-[100px]">{module.brief_description}</TableCell>
-                            <TableCell className="w-[100px]">{module.ects}</TableCell>
-                            <TableCell className="w-[100px]">{module.cats}</TableCell>
-                            <TableCell className="w-[100px]">{module.FHEQ_level}</TableCell>
-                            <TableCell className="w-[100px]">{module.delivery_mode}</TableCell>
-                            <TableCell className="w-[100px]">{module.learning_outcome}</TableCell>
-                            <TableCell className="w-[100px]">{module.module_content}</TableCell>
-                            <TableCell className="w-[100px]">{module.learn_teach_approach}</TableCell>
-                            <TableCell className="w-[100px]">{module.assessment}</TableCell>
-                            <TableCell className="w-[100px]">{module.reading_list}</TableCell>
-                            <TableCell className="w-[100px]">{module.suite}</TableCell>
-
-                        </TableRow>))}
-                </TableBody>
-            </Table>
-
-            <div className="flex justify-between mt-4">
-                <Button onClick={handlePrevPage} disabled={page === 1}>
-                    Previous
-                </Button>  
-                <span className="text-sm">Page {page} of {totalPages}</span>
-                <Button onClick={handleNextPage} disabled={page === Math.ceil(totalCount / pageSize)}>
-                    Next
-                </Button>
+          <Table>
+            <TableHeader className="bg-gray-100">
+               <TableRow className="bg-gray-100 text-gray-700">
+                <TableHead className="w-[100px]">Code</TableHead>
+                <TableHead className="w-[100px]">Lecturer</TableHead>
+                <TableHead className="w-[100px]">Department</TableHead>
+                <TableHead className="w-[100px]">Employee Type</TableHead>
+                <TableHead className="w-[100px]">Subject Area</TableHead>
+                <TableHead className="w-[100px]">Lead Program</TableHead>
+                <TableHead className="w-[100px]">Eligible Cohorts</TableHead>
+                <TableHead className="w-[100px]">Term</TableHead>
+                <TableHead className="w-[100px]">Role</TableHead>
+                <TableHead className="w-[100px]">File Name</TableHead>
+                <TableHead className="w-[100px]">Title</TableHead>
+                <TableHead className="w-[100px]">Brief Description</TableHead>
+                <TableHead className="w-[100px]">ECTS</TableHead>
+                <TableHead className="w-[100px]">CATS</TableHead>
+                <TableHead className="w-[100px]">FHEQ Level</TableHead>
+                <TableHead className="w-[100px]">Delivery Mode</TableHead>
+                <TableHead className="w-[100px]">Learning Outcome</TableHead>
+                <TableHead className="w-[100px]">Module Content</TableHead>
+                <TableHead className="w-[100px]">Learn Teach Approach</TableHead>
+                <TableHead className="w-[100px]">Assessment</TableHead>
+                <TableHead className="w-[100px]">Reading List</TableHead>
+                <TableHead className="w-[100px]">Suite</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {modules.map((module) => (
+                <TableRow key={module.id}>
+                  <TableCell className="w-[100px]">{module.id}</TableCell>
+                  <TableCell className="w-[100px]">{module.code}</TableCell>
+                  <TableCell className="w-[100px]">{module.lecturer}</TableCell>
+                  <TableCell className="w-[100px]">{module.department}</TableCell>
+                  <TableCell className="w-[100px]">{module.employee_type}</TableCell>
+                  <TableCell className="w-[100px]">{module.subject_area}</TableCell>
+                  <TableCell className="w-[100px]">{module.lead_program}</TableCell>
+                  <TableCell className="w-[100px]">{module.eligible_cohorts}</TableCell>
+                  <TableCell className="w-[100px]">{module.term}</TableCell>
+                  <TableCell className="w-[100px]">{module.role}</TableCell>
+                  <TableCell className="w-[100px]">{module.file_name}</TableCell>   
+                  <TableCell className="w-[100px]">{module.title}</TableCell>
+                  <TableCell className="w-[100px]">{module.brief_description}</TableCell>
+                  <TableCell className="w-[100px]">{module.ects}</TableCell>
+                  <TableCell className="w-[100px]">{module.cats}</TableCell>
+                  <TableCell className="w-[100px]">{module.FHEQ_level}</TableCell>
+                  <TableCell className="w-[100px]">{module.delivery_mode}</TableCell>
+                  <TableCell className="w-[100px]">{module.learning_outcome}</TableCell>
+                  <TableCell className="w-[100px]">{module.module_content}</TableCell>
+                  <TableCell className="w-[100px]">{module.learn_teach_approach}</TableCell>
+                  <TableCell className="w-[100px]">{module.assessment}</TableCell>
+                  <TableCell className="w-[100px]">{module.reading_list}</TableCell>
+                  <TableCell className="w-[100px]">{module.suite}</TableCell>  
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+      
+          {/* 分页器区域 */}
+          <div className="flex justify-end mt-6 w-full">
+            <div className="flex items-center space-x-3 text-sm">
+              <span className="text-gray-700">PageSize:</span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(value) => {
+                  setPageSize(parseInt(value))
+                  setPage(1)
+                }}
+              >
+                <SelectTrigger className="w-16 h-8 border rounded px-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+      
+              {/* < 前一页 */}
+              <button
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                disabled={page === 1}
+                className="px-2 py-1 text-gray-600 hover:bg-gray-200 disabled:opacity-40 rounded"
+              >
+                {"<"}
+              </button>
+      
+              {/* 页码按钮 */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => {
+                  if (totalPages <= 7) return true
+                  if (page <= 4) return p <= 5 || p === totalPages
+                  if (page >= totalPages - 3) return p >= totalPages - 4 || p === 1
+                  return Math.abs(p - page) <= 1 || p === 1 || p === totalPages
+                })
+                .map((p, i, arr) => {
+                  const prev = arr[i - 1]
+                  const showDots = prev && p - prev > 1
+                  return (
+                    <span key={p} className="inline-flex items-center">
+                      {showDots && <span className="px-1 text-gray-500">...</span>}
+                      <button
+                        onClick={() => setPage(p)}
+                        className={`px-2 py-1 rounded ${
+                          p === page
+                            ? "bg-blue-100 text-blue-600 font-semibold"
+                            : "hover:bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    </span>
+                  )
+                })}
+      
+              {/* > 下一页 */}
+              <button
+                onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+                disabled={page === totalPages}
+                className="px-2 py-1 text-gray-600 hover:bg-gray-200 disabled:opacity-40 rounded"
+              >
+                {">"}
+              </button>
             </div>
+          </div>
         </div>
     )
-
+      
 }
 

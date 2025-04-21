@@ -14,13 +14,13 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const totalCount = await prisma.rule.count({
+      const totalCount = await prisma.module.count({
         where: { 
           deleted_at: null,
           academic_year_id: parseInt(academic_year_id)
         }
       });
-      const modues = await prisma.rule.findMany({
+      const modules = await prisma.module.findMany({
         where: { 
           deleted_at: null,
           academic_year_id: parseInt(academic_year_id)
@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
             id: 'asc',
         },
       });
-
+      console.log(modules);
       return NextResponse.json({
-        data: modues,
+        data: modules,
         pageSize: pageSize,
         page: page,
         totalCount: totalCount
