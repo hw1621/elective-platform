@@ -9,8 +9,8 @@ import {
     TableCell,
   } from "@/components/ui/table"
 import { Select, SelectContent } from "@/components/ui/select"
-import { SelectItem, SelectTrigger, SelectValue } from "@radix-ui/react-select";
-
+import { SelectItem, SelectTrigger } from "@radix-ui/react-select";
+import { Button } from "@/components/ui/button";
 
 type Module = {
     id: number;
@@ -36,6 +36,9 @@ type Module = {
     assessment: string;
     reading_list: string;
     suite: string;
+    academic_year: {
+        name: string;
+    };
 }
 
 export default function ModuleTable() {
@@ -43,9 +46,25 @@ export default function ModuleTable() {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [totalCount, setTotalCount] = useState(0);
-    const [academic_year_id] = useState(1);
+    //Default value is 1
+    const [academic_year_id, setAcademicYearId] = useState<number>(1);
+    const [academicYears, setAcademicYears] = useState<{id: number; name: string}[]>([]);
+    const [showFilter, setShowFilter] = useState(false);
+    const [suiteFilter, setSuiteFilter] = useState<string | undefined>();
 
     useEffect(() => {   
+        const fetchAcademicYear = async () => {
+            const res = await fetch('/api/academic_year');
+            if (!res.ok) {
+                throw new Error("Failed to fetch academic years");
+            }
+            const data = await res.json();
+            setAcademicYears(data);
+        }
+        fetchAcademicYear()
+    }, []);
+
+    useEffect(() => {
         const fetchModule = async () => {
             const response = await fetch(`/api/modules/all?academic_year_id=${academic_year_id}&page=${page}&page_size=${pageSize}`);
             if (!response.ok) {
@@ -62,6 +81,43 @@ export default function ModuleTable() {
     const totalPages = Math.ceil(totalCount / pageSize);
     return (
         <div>
+            <div className="flex justify-start gap-4 mb-4">
+            <Button onClick={() => setShowFilter((prev) => !prev)}>Apply Filter</Button>
+            <Button>Upload</Button>
+            <Button>Export</Button>
+            </div>
+
+            <div className={`transform-gpu transition-transform duration-500 origin-top${showFilter ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`}>
+                {showFilter && (
+                    <div className="p-4 mt-2 border rounded-lg bg-white shadow-sm w-fit space-y-4">
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium w-24">Term</label>
+                            <select value={academic_year_id} onChange={(e) => setAcademicYearId(Number(e.target.value))} className="px-2 py-1 border rounded">
+                                {academicYears.map((year) => (
+                                    <option key={year.id} value={year.id}>
+                                        {year.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div> 
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm font-medium w-24">Suite</label>
+                            <select
+                            value={suiteFilter ?? ""}
+                            onChange={(e) => setSuiteFilter(e.target.value || undefined)}
+                            className="px-2 py-1 border rounded"
+                            >
+                            <option value="">All</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Management">Management</option>
+                            <option value="MBA">MBA</option>
+                            <option value="Specialised Master">Specialised Master</option>
+                            </select>
+                        </div>
+                    </div>
+                )}
+            </div>
+
           <Table className="table-fixed border border-gray-300">
             <TableHeader>
                 <TableRow className="bg-gray-300">
@@ -69,7 +125,7 @@ export default function ModuleTable() {
                     "Code", "Lecturer", "Department", "Employee Type", "Subject Area", "Lead Program",
                     "Eligible Cohorts", "Term", "Role", "File Name", "Title", "Brief Description",
                     "ECTS", "CATS", "FHEQ Level", "Delivery Mode", "Learning Outcome", "Module Content",
-                    "Learn Teach Approach", "Assessment", "Reading List", "Suite"
+                    "Learn Teach Approach", "Assessment", "Reading List", "Suite", "Year"
                     ].map((header, idx) => (
                     <TableHead
                         key={idx}
@@ -105,7 +161,8 @@ export default function ModuleTable() {
                   <TableCell className="w-[100px]">{module.assessment}</TableCell>
                   <TableCell className="w-[100px]">{module.reading_list}</TableCell>
                   <TableCell className="w-[100px]">{module.suite}</TableCell>  
-                </TableRow>
+                  <TableCell className="w-[100px]">{module.academic_year.name}</TableCell>
+                </TableRow> 
               ))}
             </TableBody>
           </Table>

@@ -25,6 +25,13 @@ export async function GET(request: NextRequest) {
           deleted_at: null,
           academic_year_id: parseInt(academic_year_id)
         },
+        include: {
+          academic_year: {
+            select: {
+              name: true
+            }
+          }
+        },
         skip: (page - 1) * pageSize,
         take: pageSize,
         orderBy: {
