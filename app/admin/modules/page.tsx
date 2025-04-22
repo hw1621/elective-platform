@@ -122,7 +122,7 @@ export default function ModuleTable() {
                 }}
               >
                 <SelectTrigger className="w-16 h-8 border rounded px-2">
-                  <SelectValue />
+                  {pageSize}
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="10">10</SelectItem>
