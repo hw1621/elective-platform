@@ -11,6 +11,7 @@ import {
 import { Select, SelectContent } from "@/components/ui/select"
 import { SelectItem, SelectTrigger } from "@radix-ui/react-select";
 import { Button } from "@/components/ui/button";
+import * as XLSX from 'xlsx';
 
 type Module = {
     id: number;
@@ -46,7 +47,6 @@ export default function ModuleTable() {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [totalCount, setTotalCount] = useState(0);
-    //Default value is 1
     const [academic_year_id, setAcademicYearId] = useState<number>(1);
     const [academicYears, setAcademicYears] = useState<{id: number; name: string}[]>([]);
     const [showFilter, setShowFilter] = useState(false);
@@ -79,12 +79,49 @@ export default function ModuleTable() {
     }, [academic_year_id, page, pageSize]);
 
     const totalPages = Math.ceil(totalCount / pageSize);
+    const handleExport = async () => {
+        const response = await fetch(`/api/modules/export?academic_year_id=${academic_year_id}`);
+        if (!response.ok) {
+            throw new Error("Failed to export modules");
+        }
+        const allModules: Module[] = await response.json();
+        const exportData = allModules.map((module) => ({
+            "Code": module.code,
+            "Assignment": module.lecturer,
+            "Department": module.department,
+            "Employee Type": module.employee_type,
+            "Subject Area": module.subject_area,
+            "Lead Program": module.lead_program,
+            "Eligible Cohorts/Programmes": module.eligible_cohorts,
+            "Term": module.term,
+            "Role": module.role,
+            "File Name": module.file_name,
+            "Long Title": module.title,
+            "Brief Description": module.brief_description,
+            "Ects": module.ects,
+            "Cats": module.cats,
+            "FHEQ Level": module.FHEQ_level,
+            "Delivery_Mode": module.delivery_mode,
+            "Learning_Outcome": module.learning_outcome,
+            "Module_Content": module.module_content,
+            "Learning_and_Teaching_Approach": module.learn_teach_approach,
+            "Assessment_Strategy": module.assessment,
+            "Reading_List": module.reading_list,
+            "Suite": module.suite,
+            "Year": module.academic_year.name
+        }));
+        const worksheet = XLSX.utils.json_to_sheet(exportData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Modules");
+        XLSX.writeFile(workbook, `modules_${academic_year_id}.xlsx`);
+    };
+
     return (
         <div>
             <div className="flex justify-start gap-4 mb-4">
             <Button onClick={() => setShowFilter((prev) => !prev)}>Apply Filter</Button>
             <Button>Upload</Button>
-            <Button>Export</Button>
+            <Button onClick={handleExport}>Export</Button>
             </div>
 
             <div className={`transform-gpu transition-transform duration-500 origin-top${showFilter ? 'scale-y-100 opacity-100' : 'scale-y-0 opacity-0'}`}>
