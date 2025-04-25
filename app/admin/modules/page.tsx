@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
     Table,
     TableHeader,
@@ -12,6 +12,7 @@ import { Select, SelectContent } from "@/components/ui/select"
 import { SelectItem, SelectTrigger } from "@radix-ui/react-select";
 import { Button } from "@/components/ui/button";
 import * as XLSX from 'xlsx';
+import { parseBuffer, ParsedModule } from '@/utils/parseExcelToModules';
 
 type Module = {
     id: number;
@@ -51,6 +52,10 @@ export default function ModuleTable() {
     const [academicYears, setAcademicYears] = useState<{id: number; name: string}[]>([]);
     const [showFilter, setShowFilter] = useState(false);
     const [suiteFilter, setSuiteFilter] = useState<string | undefined>();
+    const [previewData, setPreviewData] = useState<ParsedModule[]>([]);
+    const [showDialog, setShowDialog] = useState(false);
+    const fileInput = useRef<HTMLInputElement>(null);
+    const [editingCell, setEditingCell] = useState<{ row: number; column: string } | null>(null);
 
     useEffect(() => {   
         const fetchAcademicYear = async () => {
@@ -78,6 +83,39 @@ export default function ModuleTable() {
         fetchModule()
     }, [academic_year_id, page, pageSize]);
 
+    const yearIdMap = async () => {
+        const res = await fetch('/api/academic_year');
+        if (!res.ok) {  
+            throw new Error("Failed to fetch all academic years");
+        }
+        const data = await res.json();
+        const map: Record<string, number> = {};
+        data.forEach((year: { id: number; name: string }) => {
+            map[year.name] = year.id;
+        });
+        return map;
+    }
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file?.name.endsWith('.xlsx')) {
+            alert("Please upload a valid Excel file");
+            return;
+        }
+        const parseExcel = async (file: File) => {
+            const buffer = await file.arrayBuffer();
+            const idMap = await yearIdMap();
+            const parsedModules = parseBuffer(Buffer.from(buffer), idMap);
+
+            console.log("Parsed Modules:", parsedModules);
+            setPreviewData(parsedModules);
+            setShowDialog(true);
+            return parsedModules
+        }      
+        parseExcel(file);
+        e.target.value = "";
+    };
+
     const totalPages = Math.ceil(totalCount / pageSize);
     const handleExport = async () => {
         const response = await fetch(`/api/modules/export?academic_year_id=${academic_year_id}`);
@@ -86,13 +124,13 @@ export default function ModuleTable() {
         }
         const allModules: Module[] = await response.json();
         const exportData = allModules.map((module) => ({
-            "Code": module.code,
+            "BUSI Code": module.code,
             "Assignment": module.lecturer,
             "Department": module.department,
             "Employee Type": module.employee_type,
             "Subject Area": module.subject_area,
             "Lead Program": module.lead_program,
-            "Eligible Cohorts/Programmes": module.eligible_cohorts,
+            "Eligible Cohorts": module.eligible_cohorts,
             "Term": module.term,
             "Role": module.role,
             "File Name": module.file_name,
@@ -101,12 +139,12 @@ export default function ModuleTable() {
             "Ects": module.ects,
             "Cats": module.cats,
             "FHEQ Level": module.FHEQ_level,
-            "Delivery_Mode": module.delivery_mode,
-            "Learning_Outcome": module.learning_outcome,
-            "Module_Content": module.module_content,
-            "Learning_and_Teaching_Approach": module.learn_teach_approach,
-            "Assessment_Strategy": module.assessment,
-            "Reading_List": module.reading_list,
+            "Delivery Mode": module.delivery_mode,
+            "Learning Outcomes": module.learning_outcome,
+            "Module Content": module.module_content,
+            "Learning and Teaching_Approach": module.learn_teach_approach,
+            "Assessment Strategy": module.assessment,
+            "Reading List": module.reading_list,
             "Suite": module.suite,
             "Year": module.academic_year.name
         }));
@@ -116,11 +154,20 @@ export default function ModuleTable() {
         XLSX.writeFile(workbook, `modules_${academic_year_id}.xlsx`);
     };
 
+    const handleCellEdit = (row: number, column: string, newValue: string) => {
+        setEditingCell({ row, column });
+        const newData = [...previewData];
+        (newData[row] as any)[column] = newValue;
+        setPreviewData(newData);
+        // setEditingCell(null);
+    };
+
     return (
         <div>
             <div className="flex justify-start gap-4 mb-4">
             <Button onClick={() => setShowFilter((prev) => !prev)}>Apply Filter</Button>
-            <Button>Upload</Button>
+            <input type='file' accept='.xlsx' ref={fileInput} onChange={handleFileUpload} className="hidden" />
+            <Button onClick={() => fileInput.current?.click()}>Upload</Button>
             <Button onClick={handleExport}>Export</Button>
             </div>
 
@@ -272,6 +319,79 @@ export default function ModuleTable() {
               </button>
             </div>
           </div>
+          {showDialog && (
+            <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+                <div className="bg-white rounded-xl p-6 w-[90vw] max-w-6xl max-h-[90vh] overflow-auto shadow-lg">
+                <h2 className="text-lg font-bold mb-4">Preview of Imported Modules</h2>
+
+                {previewData.length === 0 ? (
+                    <p>No valid data to preview</p>
+                ) : (
+                    <div className="overflow-auto max-h-[70vh]">
+                        <table className="w-full border-collapse text-sm">
+                            <thead className="sticky top-0 bg-gray-200">
+                                <tr>
+                                {Object.keys(previewData[0]).map((key) => (
+                                    <th
+                                    key={key}
+                                    className="border px-2 py-2 font-medium text-mid min-w-[120px] max-w-[250px] truncate"
+                                    >
+                                    {key}
+                                    </th>
+                                ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {previewData.map((module, rowIndex) => (
+                                <tr key={rowIndex}>
+                                    {Object.entries(module).map(([key, value], colIndex) => (
+                                    <td key={colIndex} className="border px-2 py-2 align-top" 
+                                        onDoubleClick={() => setEditingCell({ row: rowIndex, column: colIndex.toString() })}
+                                        onClick={(e) => {
+                                            const target = e.target as HTMLElement;
+                                            if (target.tagName.toLocaleLowerCase() === 'textarea') {
+                                                return;
+                                            }
+                                            if (editingCell && (editingCell.row !== rowIndex || editingCell.column !== colIndex.toString())) {
+                                                setEditingCell(null);
+                                            } 
+                                        }}
+                                    >  
+                                        {editingCell?.row === rowIndex && editingCell.column === colIndex.toString() ? (
+                                            <textarea
+                                            autoFocus
+                                            value={String(value ?? '')}
+                                            onChange={(e) => handleCellEdit(rowIndex, key, e.target.value)}
+                                            className="w-full h-auto min-h-[120px] max-h-[300px] text-xs p-2 border border-gray-300 resize-none overflow-auto"
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    handleCellEdit(rowIndex, key, e.currentTarget.value);
+                                                    setEditingCell(null);
+                                                }
+                                            }}
+                                           />  
+                                        ) : (
+                                            <div className="max-h-[80px] max-w-[250px] overflow-auto text-xs whitespace-pre-wrap break-words">
+                                            {String(value)}
+                                            </div>
+                                        )}
+                                    </td>
+                                    ))}
+                                </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                <div className="mt-4 flex justify-end">
+                    <Button onClick={() => setShowDialog(false)}>Close</Button>
+                </div>
+                </div>
+            </div>
+          )}
+
         </div>
     )
       
