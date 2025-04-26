@@ -83,6 +83,22 @@ export default function ModuleTable() {
         fetchModule()
     }, [academic_year_id, page, pageSize]);
 
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('textarea')) {
+                return;
+            }
+            if (editingCell !== null) {
+                setEditingCell(null);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [editingCell]);
+
     const yearIdMap = async () => {
         const res = await fetch('/api/academic_year');
         if (!res.ok) {  
@@ -151,15 +167,17 @@ export default function ModuleTable() {
         const worksheet = XLSX.utils.json_to_sheet(exportData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Modules");
-        XLSX.writeFile(workbook, `modules_${academic_year_id}.xlsx`);
+        const now = new Date();
+        const timestamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 12);
+        XLSX.writeFile(workbook, `modules_${academic_year_id}_${timestamp}.xlsx`);
     };
 
     const handleCellEdit = (row: number, column: string, newValue: string) => {
-        setEditingCell({ row, column });
-        const newData = [...previewData];
-        (newData[row] as any)[column] = newValue;
-        setPreviewData(newData);
-        // setEditingCell(null);
+        setPreviewData(prev => {
+            const newData = [...prev];
+            (newData[row] as any)[column] = newValue;
+            return newData;
+        });
     };
 
     return (
@@ -345,38 +363,33 @@ export default function ModuleTable() {
                                 {previewData.map((module, rowIndex) => (
                                 <tr key={rowIndex}>
                                     {Object.entries(module).map(([key, value], colIndex) => (
-                                    <td key={colIndex} className="border px-2 py-2 align-top" 
-                                        onDoubleClick={() => setEditingCell({ row: rowIndex, column: colIndex.toString() })}
-                                        onClick={(e) => {
-                                            const target = e.target as HTMLElement;
-                                            if (target.tagName.toLocaleLowerCase() === 'textarea') {
-                                                return;
-                                            }
-                                            if (editingCell && (editingCell.row !== rowIndex || editingCell.column !== colIndex.toString())) {
-                                                setEditingCell(null);
-                                            } 
-                                        }}
-                                    >  
+                                        <td key={colIndex} className="border px-2 py-2 align-top" 
+                                            onDoubleClick={() => setEditingCell({ row: rowIndex, column: colIndex.toString() })}
+                                        >  
                                         {editingCell?.row === rowIndex && editingCell.column === colIndex.toString() ? (
                                             <textarea
-                                            autoFocus
-                                            value={String(value ?? '')}
-                                            onChange={(e) => handleCellEdit(rowIndex, key, e.target.value)}
-                                            className="w-full h-auto min-h-[120px] max-h-[300px] text-xs p-2 border border-gray-300 resize-none overflow-auto"
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter' && !e.shiftKey) {
-                                                    e.preventDefault();
-                                                    handleCellEdit(rowIndex, key, e.currentTarget.value);
-                                                    setEditingCell(null);
-                                                }
-                                            }}
-                                           />  
+                                                key={`${module.code}-${key}-textarea`}
+                                                autoFocus
+                                                value={String(value ?? '')}
+                                                onChange={(e) => handleCellEdit(rowIndex, key, e.target.value)}
+                                                className="w-full h-auto min-h-[120px] max-h-[300px] text-xs p-2 border border-gray-300 resize-none overflow-auto"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                                        e.preventDefault();
+                                                        handleCellEdit(rowIndex, key, e.currentTarget.value);
+                                                        setEditingCell(null);
+                                                    }
+                                                    if (e.key === 'Escape') {
+                                                        setEditingCell(null);
+                                                    }
+                                                }}
+                                            />  
                                         ) : (
                                             <div className="max-h-[80px] max-w-[250px] overflow-auto text-xs whitespace-pre-wrap break-words">
                                             {String(value)}
                                             </div>
                                         )}
-                                    </td>
+                                        </td>
                                     ))}
                                 </tr>
                                 ))}
