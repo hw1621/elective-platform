@@ -266,35 +266,26 @@ export default function ModuleTable() {
                     ))}
                 </TableRow>
             </TableHeader>
-            <TableBody>
-              {modules.map((module) => (
-                <TableRow key={module.id}>
-                  <TableCell className="w-[100px]">{module.code}</TableCell>
-                  <TableCell className="w-[100px]">{module.lecturer}</TableCell>
-                  <TableCell className="w-[100px]">{module.department}</TableCell>
-                  <TableCell className="w-[100px]">{module.employee_type}</TableCell>
-                  <TableCell className="w-[100px]">{module.subject_area}</TableCell>
-                  <TableCell className="w-[100px]">{module.lead_program}</TableCell>
-                  <TableCell className="w-[100px]">{module.eligible_cohorts}</TableCell>
-                  <TableCell className="w-[100px]">{module.term}</TableCell>
-                  <TableCell className="w-[100px]">{module.role}</TableCell>
-                  <TableCell className="w-[100px]">{module.file_name}</TableCell>   
-                  <TableCell className="w-[100px]">{module.title}</TableCell>
-                  <TableCell className="w-[100px]">{module.brief_description}</TableCell>
-                  <TableCell className="w-[100px]">{module.ects}</TableCell>
-                  <TableCell className="w-[100px]">{module.cats}</TableCell>
-                  <TableCell className="w-[100px]">{module.FHEQ_level}</TableCell>
-                  <TableCell className="w-[100px]">{module.delivery_mode}</TableCell>
-                  <TableCell className="w-[100px]">{module.learning_outcome}</TableCell>
-                  <TableCell className="w-[100px]">{module.module_content}</TableCell>
-                  <TableCell className="w-[100px]">{module.learn_teach_approach}</TableCell>
-                  <TableCell className="w-[100px]">{module.assessment}</TableCell>
-                  <TableCell className="w-[100px]">{module.reading_list}</TableCell>
-                  <TableCell className="w-[100px]">{module.suite}</TableCell>  
-                  <TableCell className="w-[100px]">{module.academic_year.name}</TableCell>
-                </TableRow> 
-              ))}
-            </TableBody>
+                <TableBody>
+                {modules.map((module) => (
+                    <TableRow key={module.id}>
+                    {[
+                        module.code, module.lecturer, module.department, module.employee_type,
+                        module.subject_area, module.lead_program, module.eligible_cohorts, module.term,
+                        module.role, module.file_name, module.title, module.brief_description,
+                        module.ects, module.cats, module.FHEQ_level, module.delivery_mode,
+                        module.learning_outcome, module.module_content, module.learn_teach_approach,
+                        module.assessment, module.reading_list, module.suite, module.academic_year.name,
+                    ].map((value, idx) => (
+                        <TableCell key={idx} className="w-[140px]">
+                        <div className="max-h-[120px] overflow-auto text-xs whitespace-pre-wrap break-words">
+                            {String(value ?? '')}
+                        </div>
+                        </TableCell>
+                    ))}
+                    </TableRow>
+                ))}
+                </TableBody>
           </Table>
       
           {/* 分页器区域 */}
