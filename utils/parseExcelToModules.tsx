@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 
-export type RawExcelRow = Record<string, any>
+export type RawExcelRow = Record<string, any>;
 export type ParsedModule = {
     code: string;
     lecturer?: string;
@@ -25,40 +25,56 @@ export type ParsedModule = {
     reading_list?: string;
     suite?: string;
     academic_year_id: number;
-}
+};
 
 export function parseBuffer(buffer: Buffer, idMap: Record<string, number>): ParsedModule[] {
-    const workbook = XLSX.read(buffer, { type: "buffer" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet).slice(1);
-    console.log(JSON.stringify(rows));
-  
-    return rows.map((row, i) => {
-  
-      return {
-        code: String(row["BUSI Code"]),
-        title: String(row["Long Title"]),
-        academic_year_id: idMap[row.Year], 
-        lecturer: row["Assignment"] ?? null,
-        department: row["Department"] ?? null,
-        employee_type: row["Employee Type"] ?? null,
-        subject_area: row["Subject Area"] ?? null,
-        lead_program: row["Lead Programme"] ?? null,
-        eligible_cohorts: row["Eligible Cohorts"] ?? null,
-        term: row.Term ?? null,
-        role: row.Role ?? null,
-        file_name: row["File Name"] ?? null,
-        brief_description: row["Brief Description"] ?? null,
-        ects: parseFloat(row.ECTs) || undefined,
-        cats: parseFloat(row.CATs) || undefined,
-        FHEQ_level: row["FHEQ Level"] ?? null,
-        delivery_mode: row["Delivery Mode"] ?? null,
-        learning_outcome: row["Learning Outcomes"] ?? null,
-        module_content: row["Module Content"] ?? null,
-        learn_teach_approach: row["Learning and Teaching Approach"] ?? null,
-        assessment: row["Assessment Strategy"] ?? null,
-        reading_list: row["Reading List"] ?? null,
-        suite: row.Suite ?? null,
-      };
-    });
-  }
+  const workbook = XLSX.read(buffer, { type: 'buffer' });
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json<Record<string, any>>(sheet).slice(1); // skip first row
+
+  return rows
+      .map((row) => {
+          const yearName = row["Year"];
+          const academicYearId = idMap[yearName];
+
+          if (!academicYearId) {
+              throw new Error(`Invalid academic year name: ${yearName}`);
+          }
+
+          const safeString = (value: any): string | undefined => {
+              if (value === null || value === undefined || value === '') return undefined;
+              return String(value).trim();
+          };
+
+          const safeNumber = (value: any): number | undefined => {
+              const num = parseFloat(value);
+              return isNaN(num) ? undefined : num;
+          };
+
+          return {
+              code: safeString(row["BUSI Code"])!,
+              title: safeString(row["Long Title"])!,
+              academic_year_id: academicYearId,
+              lecturer: safeString(row["Assignment"]),
+              department: safeString(row["Department"]),
+              employee_type: safeString(row["Employee Type"]),
+              subject_area: safeString(row["Subject Area"]),
+              lead_program: safeString(row["Lead Programme"]),
+              eligible_cohorts: safeString(row["Eligible Cohorts"]),
+              term: safeString(row["Term"]),
+              role: safeString(row["Role"]),
+              file_name: safeString(row["File Name"]),
+              brief_description: safeString(row["Brief Description"]),
+              ects: safeNumber(row["ECTs"]),
+              cats: safeNumber(row["CATs"]),
+              FHEQ_level: safeString(row["FHEQ Level"]),
+              delivery_mode: safeString(row["Delivery Mode"]),
+              learning_outcome: safeString(row["Learning Outcomes"]),
+              module_content: safeString(row["Module Content"]),
+              learn_teach_approach: safeString(row["Learning and Teaching Approach"]),
+              assessment: safeString(row["Assessment Strategy"]),
+              reading_list: safeString(row["Reading List"]),
+              suite: safeString(row["Suite"]),
+          } as ParsedModule;
+      });
+}

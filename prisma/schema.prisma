@@ -54,7 +54,7 @@ model module {
   subject_area   String?   @db.VarChar(32)
   lead_program   String?   @db.VarChar(32)
   eligible_cohorts String?  @db.VarChar(512)
-  term           term?    
+  term           String?    
   role           String?   @db.VarChar(32)
   file_name      String?   @db.VarChar(512)
   title          String   @db.VarChar(256)

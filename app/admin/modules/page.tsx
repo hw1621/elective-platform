@@ -56,15 +56,16 @@ export default function ModuleTable() {
     const [showDialog, setShowDialog] = useState(false);
     const fileInput = useRef<HTMLInputElement>(null);
     const [editingCell, setEditingCell] = useState<{ row: number; column: string } | null>(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {   
         const fetchAcademicYear = async () => {
             const res = await fetch('/api/academic_year');
-            if (!res.ok) {
-                throw new Error("Failed to fetch academic years");
-            }
             const data = await res.json();
-            setAcademicYears(data);
+            if (!data.success) {
+                throw new Error("Failed to fetch academic years, errorMsg: " + data.message);  
+            }
+            setAcademicYears(data.data);
         }
         fetchAcademicYear()
     }, []);
@@ -100,13 +101,8 @@ export default function ModuleTable() {
     }, [editingCell]);
 
     const yearIdMap = async () => {
-        const res = await fetch('/api/academic_year');
-        if (!res.ok) {  
-            throw new Error("Failed to fetch all academic years");
-        }
-        const data = await res.json();
         const map: Record<string, number> = {};
-        data.forEach((year: { id: number; name: string }) => {
+        academicYears.forEach((year: { id: number; name: string }) => {
             map[year.name] = year.id;
         });
         return map;
@@ -179,6 +175,38 @@ export default function ModuleTable() {
             return newData;
         });
     };
+
+    const handleConfirmSave = async () => {
+        setLoading(true);
+        const response = await fetch('/api/modules/import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(previewData),
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+            setLoading(false);
+            throw new Error(`Import failed, errorMsg: ${data.message}`);
+        }
+
+        alert("Import successful");
+        setShowDialog(false);
+        setLoading(false);
+
+        const refethchModule = await fetch(`/api/modules/all?academic_year_id=${academic_year_id}&page=${page}&page_size=${pageSize}`);
+        if (!refethchModule.ok) {
+            throw new Error("Failed to automatically refetch modules after import");
+        }
+        const moduleData = await refethchModule.json();
+        setModules(moduleData.data);
+        setTotalCount(moduleData.totalCount);
+        setPage(moduleData.page);
+
+        
+    }
 
     return (
         <div>
@@ -398,9 +426,22 @@ export default function ModuleTable() {
                     </div>
                 )}
 
-                <div className="mt-4 flex justify-end">
-                    <Button onClick={() => setShowDialog(false)}>Close</Button>
+                <div className="mt-4 flex justify-end gap-2">
+                    <Button 
+                        variant="outline" 
+                        onClick={() => setShowDialog(false)}
+                        disabled={loading}
+                    >
+                        Close
+                    </Button>
+                    <Button 
+                        onClick={handleConfirmSave} 
+                        disabled={loading}
+                    >
+                        {loading ? "Saving..." : "Confirm"}
+                    </Button>
                 </div>
+
                 </div>
             </div>
           )}
