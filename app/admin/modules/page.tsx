@@ -117,7 +117,8 @@ export default function ModuleTable() {
         const parseExcel = async (file: File) => {
             const buffer = await file.arrayBuffer();
             const idMap = await yearIdMap();
-            const parsedModules = parseBuffer(Buffer.from(buffer), idMap);
+            const ParseResult = parseBuffer(Buffer.from(buffer), idMap);
+            const parsedModules = ParseResult.parsed;
 
             console.log("Parsed Modules:", parsedModules);
             setPreviewData(parsedModules);
