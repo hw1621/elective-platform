@@ -57,6 +57,7 @@ export default function ModuleTable() {
     const fileInput = useRef<HTMLInputElement>(null);
     const [editingCell, setEditingCell] = useState<{ row: number; column: string } | null>(null);
     const [loading, setLoading] = useState(false);
+    const [parseErrors, setParseErrors] = useState<{ row: number; reason: string }[]>([]);
 
     useEffect(() => {   
         const fetchAcademicYear = async () => {
@@ -117,13 +118,11 @@ export default function ModuleTable() {
         const parseExcel = async (file: File) => {
             const buffer = await file.arrayBuffer();
             const idMap = await yearIdMap();
-            const ParseResult = parseBuffer(Buffer.from(buffer), idMap);
-            const parsedModules = ParseResult.parsed;
+            const parseResult = parseBuffer(Buffer.from(buffer), idMap);
 
-            console.log("Parsed Modules:", parsedModules);
-            setPreviewData(parsedModules);
+            setPreviewData(parseResult.parsed);
+            setParseErrors(parseResult.errors);
             setShowDialog(true);
-            return parsedModules
         }      
         parseExcel(file);
         e.target.value = "";
@@ -361,6 +360,19 @@ export default function ModuleTable() {
             <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
                 <div className="bg-white rounded-xl p-6 w-[90vw] max-w-6xl max-h-[90vh] overflow-auto shadow-lg">
                 <h2 className="text-lg font-bold mb-4">Preview of Imported Modules</h2>
+
+                {parseErrors.length > 0 && (
+                    <div className="bg-red-100 text-red-700 p-3 rounded mb-4 text-sm max-h-40 overflow-auto">
+                        ⚠️ {parseErrors.length} error(s) found:
+                        <ul className="list-disc list-inside mt-2 space-y-1">
+                            {parseErrors.map((error, idx) => (
+                                <li key={idx}>
+                                    Row {error.row}: {error.reason}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
 
                 {previewData.length === 0 ? (
                     <p>No valid data to preview</p>
