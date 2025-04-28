@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 type Program = {
     id: number;
@@ -12,6 +13,7 @@ type Program = {
 
 export default function ProgramList() {
     const [programs, setPrograms] = useState<Program[]>([]);
+    const router = useRouter();
 
     useEffect(() => {
         const fetchPrograms = async () => {
@@ -39,26 +41,30 @@ export default function ProgramList() {
         return acc;
     }, {} as Record<string, Program[]>);
 
+    const handleConfigure = (programId: number) => {
+        router.push(`/admin/programs/${programId}`);
+    };
+
     return (
         <div className="p-8 space-y-10">
           {Object.entries(groupedPrograms).map(([suite, programs]) => (
-            <div key={suite}>
-              <h2 className="text-2xl font-bold mb-4">{suite}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div key={suite} className="mb-10">
+                <div className="flex items-center gap-2 mb-4">
+                    <span className="text-3xl font-extrabold tracking-wide uppercase">{suite}</span>
+                </div>
+
+               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {programs.map((program) => (
-                  <Card key={program.id} className="hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6 flex flex-col gap-2">
+                  <Card key={program.id} className="hover:shadow-lg transition-shadow h-[220px]">
+                    <CardContent className="p-6 flex flex-col justify-between h-full">
                       <CardTitle className="text-lg font-semibold">
                         {program.title}
                       </CardTitle>
                       <p className="text-sm text-gray-600">{program.code}</p>
                       <Button
                         variant="outline"
-                        className="mt-auto"
-                        onClick={() => {
-                          // 例如跳转到 program 的详细配置页
-                          window.location.href = `/admin/programs/${program.id}`;
-                        }}
+                        className="w-full"
+                        onClick={()=>handleConfigure(program.id)}
                       >
                         Configure
                       </Button>
