@@ -11,7 +11,7 @@ export default function Navbar() {
     { href: '/admin/dashboard', label: 'Dashboard' },
     { href: '/admin/staff', label: 'Staff' },
     { href: '/admin/modules', label: 'Modules' },
-    { href: '/admin/configuration', label: 'Configuration' },
+    { href: '/admin/config', label: 'Configuration' },
     { href: '/admin/reports', label: 'Reports' },
   ];
 

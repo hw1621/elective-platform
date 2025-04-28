@@ -2,25 +2,30 @@
 
 import { useEffect, useState } from "react";
 import { Container, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
-import { Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
 
-type ProgramWithAcademicYear = Prisma.programGetPayload<{
-  include: {
-    academic_year: true;
-  };
-}>;
+type Program = {
+  id: number;
+  title: string;
+  code: string;
+  suite: string;
+};
 
 export default function Programs() {
-  const [programs, setPrograms] = useState<ProgramWithAcademicYear[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    fetch("/api/programs")
-      .then((res) => res.json())
-      .then((data: ProgramWithAcademicYear[]) => {
-        setPrograms(data);
-      });
+    async function fetchPrograms() {
+      const response = await fetch("/api/programs?academic_year_id=1");
+      const result = await response.json();
+      if (result.success) {
+        setPrograms(result.data);
+      } else {
+        console.error("Failed to fetch programs:", result.message);
+      }
+    }
+    fetchPrograms();
   }, []);
 
   const handleRowClick = (programId: number) => {
@@ -54,7 +59,7 @@ export default function Programs() {
               >
                 <TableCell>{program.code}</TableCell>
                 <TableCell>{program.title}</TableCell>
-                <TableCell>{program.academic_year?.name ?? "N/A"}</TableCell>
+                <TableCell>{"2425"}</TableCell>
                 <TableCell>{program.suite ?? "N/A"}</TableCell>
               </TableRow>
             ))}
