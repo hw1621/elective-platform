@@ -33,13 +33,13 @@ export async function POST(request: NextRequest) {
         const updates = [];
         const inserts = [];
 
-        for (const module of modules) {
-            if (seenCodes.has(module.code)) {
+        for (const mod of modules) {
+            if (seenCodes.has(mod.code)) {
                 continue;
             }
-            seenCodes.add(module.code);
+            seenCodes.add(mod.code);
             
-            const { code, academic_year_id, ...rest } = module;
+            const { code, academic_year_id, ...rest } = mod;
             const existingId = existingMap.get(code);
 
             if (existingId) {
