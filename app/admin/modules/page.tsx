@@ -131,10 +131,11 @@ export default function ModuleTable() {
     const totalPages = Math.ceil(totalCount / pageSize);
     const handleExport = async () => {
         const response = await fetch(`/api/modules/export?academic_year_id=${academic_year_id}`);
-        if (!response.ok) {
-            throw new Error("Failed to export modules");
+        const data = await response.json();
+        if (!data.success) {
+            throw new Error("Failed to export modules, errorMsg: " + data.message);
         }
-        const allModules: Module[] = await response.json();
+        const allModules: Module[] = data.data.modules;
         const exportData = allModules.map((module) => ({
             "BUSI Code": module.code,
             "Assignment": module.lecturer,
@@ -171,7 +172,10 @@ export default function ModuleTable() {
     const handleCellEdit = (row: number, column: string, newValue: string) => {
         setPreviewData(prev => {
             const newData = [...prev];
-            (newData[row] as any)[column] = newValue;
+            newData[row] = {
+                ...newData[row],
+                [column]: newValue,
+            };
             return newData;
         });
     };
