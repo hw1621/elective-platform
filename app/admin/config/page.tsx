@@ -42,7 +42,7 @@ export default function ProgramList() {
     }, {} as Record<string, Program[]>);
 
     const handleConfigure = (programId: number) => {
-        router.push(`/admin/programs/${programId}`);
+        router.push(`/admin/config/${programId}`);
     };
 
     return (
