@@ -1,6 +1,6 @@
 "use client"
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react"
 import { useState } from "react"
@@ -35,7 +35,7 @@ export default function ProgramRuleConfig() {
     useEffect(() => {
         const fetchRules = async () => {
             try {
-                const response = await fetch(`/api/rules/?program_id=${programId}&academic_year_id=1`);
+                const response = await fetch(`/api/rules/?program_id=${programId}&academic_year_id=${academic_year_id}`);
                 const result = await response.json();
                 if (!result.success) {
                     throw new Error(result.message);
@@ -72,7 +72,7 @@ export default function ProgramRuleConfig() {
 
     const handleSave = async (rule: Rule) => {
         try {
-            const response = await fetch(`/api/rules}`, {
+            const response = await fetch(`/api/rules`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -96,13 +96,6 @@ export default function ProgramRuleConfig() {
             alert("Failed to save the rule. Please try again.");
         }
     }
-
-    const handleDelete = async (rule: Rule) => {
-        
-    }
-
-
-
     
     return (
         <div className='p-8 space-y-10'>
@@ -157,8 +150,8 @@ export default function ProgramRuleConfig() {
                                 ) : (
                                     <>
                                     <span className="text-base font-medium capitalize">{rule.module_group.name}</span>
-                                    <span className="text-base">Min ECTS: {rule.module_group.min_ects}</span>
-                                    <span className="text-base">Max ECTS: {rule.module_group.max_ects}</span>
+                                    <span className="text-base">Min ECTs: {rule.module_group.min_ects}</span>
+                                    <span className="text-base">Max ECTs: {rule.module_group.max_ects}</span>
 
                                     <div className="flex space-x-2 justify-end">
                                         <Button variant="outline" size="sm" onClick={() => handleEdit(rule)}>Edit</Button>

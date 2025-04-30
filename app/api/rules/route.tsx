@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
         const { module_group_id, name, min_ects, max_ects} = body;
-        const updateData: any = {};
+        const updateData: Prisma.module_groupUpdateInput = {};
         if (name !== undefined) updateData.name = name;
         if (min_ects !== undefined) updateData.min_ects = min_ects;
         if (max_ects !== undefined) updateData.max_ects = max_ects;
