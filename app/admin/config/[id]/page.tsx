@@ -96,6 +96,32 @@ export default function ProgramRuleConfig() {
             alert("Failed to save the rule. Please try again.");
         }
     }
+
+    const handleDelete = async (rule: Rule) => {
+        const confirmDelete = confirm("Are you sure you want to delete this rule?");
+
+        if (!confirmDelete) return;
+        try {
+            const response = await fetch(`api/rules`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    module_group_id: rule.module_group.id,
+                    rule_id: rule.id,
+                }),
+            });
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            setRules((prev) => prev.filter((r) => r.id !== rule.id));
+        } catch (error) {
+            console.error("Error deleting rule:", error);
+            alert("Failed to delete the rule. Please try again.");
+        }
+    }
     
     return (
         <div className='p-8 space-y-10'>
@@ -155,7 +181,7 @@ export default function ProgramRuleConfig() {
 
                                     <div className="flex space-x-2 justify-end">
                                         <Button variant="outline" size="sm" onClick={() => handleEdit(rule)}>Edit</Button>
-                                        <Button variant="destructive" size="sm" onClick={() => handleEdit(rule)}>Delete</Button>
+                                        <Button variant="destructive" size="sm" onClick={() => handleDelete(rule)}>Delete</Button>
                                         <Button
                                         variant="outline"
                                         size="sm"

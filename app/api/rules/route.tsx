@@ -79,3 +79,47 @@ export async function PATCH(request: NextRequest) {
         }, { status: 500 })
     }
 }
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { module_group_id, rule_id } = body;
+        if (!module_group_id || !rule_id) {
+            return NextResponse.json({
+                success: false,
+                message: "Missing module_group_id or rule_idparameter"
+            }, { status: 400 });
+        }
+
+        const now = new Date();
+        await prisma.$transaction([
+            prisma.rule.updateMany({
+                where: {
+                    id: rule_id
+                },
+                data: {
+                    deleted_at: now
+                }
+            }),
+            prisma.module_group.update({
+                where: {
+                    id: module_group_id
+                },
+                data: {
+                    deleted_at: now
+                }
+            })
+        ]);
+
+        return NextResponse.json({
+            success: true,
+            message: "Module group deleted successfully"
+        }, { status: 200 });
+    } catch (error) {
+        console.error("Error deleting module group: ", error);
+        return NextResponse.json({
+            success: false,
+            message: (error as Error).message,
+        }, { status: 500 });
+    }
+}
