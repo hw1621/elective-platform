@@ -80,6 +80,7 @@ export async function PATCH(request: NextRequest) {
     }
 }
 
+//Delete module_group
 export async function DELETE(request: NextRequest) {
     try {
         const body = await request.json();

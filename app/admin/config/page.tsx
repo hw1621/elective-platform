@@ -41,8 +41,8 @@ export default function ProgramList() {
         return acc;
     }, {} as Record<string, Program[]>);
 
-    const handleConfigure = (programId: number) => {
-        router.push(`/admin/config/${programId}`);
+    const handleConfigure = (programId: number, title: string) => {
+      router.push(`/admin/config/${programId}?title=${encodeURIComponent(title)}`);
     };
 
     return (
@@ -64,7 +64,7 @@ export default function ProgramList() {
                       <Button
                         variant="outline"
                         className="w-full"
-                        onClick={()=>handleConfigure(program.id)}
+                        onClick={()=>handleConfigure(program.id, program.title)}
                       >
                         Configure
                       </Button>
