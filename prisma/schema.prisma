@@ -27,6 +27,7 @@ model program {
   academic_year    academic_year  @relation(fields: [academic_year_id], references: [id])
   module_instances module_instance[]
   rules            rule[]
+  routes           route[]
 }
 
 model academic_year {
@@ -116,6 +117,10 @@ model rule {
   program_id        Int   
   module_group_id   Int  
   academic_year_id  Int 
+  route_id          Int
+
+  max_ects         Decimal?   @db.Decimal(4,2)
+  min_ects         Decimal?   @db.Decimal(4,2)
   created_at        DateTime    @default(now())
   modified_at       DateTime    @default(now()) @updatedAt
   deleted_at        DateTime?
@@ -123,14 +128,12 @@ model rule {
   academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
   program       program         @relation(fields: [program_id], references: [id])
   module_group  module_group    @relation(fields: [module_group_id], references: [id])
+  route         route           @relation(fields: [route_id], references: [id])
 }
 
 model module_group {
     id                Int     @id @default(autoincrement())
     name             String   @db.VarChar(512)
-    max_ects         Decimal?   @db.Decimal(4,2)
-    min_ects         Decimal?   @db.Decimal(4,2)
-
     created_at       DateTime    @default(now())
     modified_at      DateTime    @default(now()) @updatedAt
     deleted_at       DateTime?   
@@ -151,6 +154,18 @@ model module_group_mapping {
     module_group      module_group     @relation(fields:[module_group_id], references: [id])
     module            module           @relation(fields:[module_id], references: [id])
     @@unique([module_group_id, module_id])
+}
+
+model route {
+  id          Int   @id @default(autoincrement())
+  name        String  @db.VarChar(128)
+  program_id  Int
+  created_at        DateTime    @default(now())
+  modified_at       DateTime    @default(now()) @updatedAt
+  deleted_at        DateTime?   
+
+  program    program   @relation(fields:[program_id], references: [id])
+  rules      rule[]
 }
 
 
