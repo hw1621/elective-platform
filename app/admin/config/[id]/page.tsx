@@ -6,12 +6,6 @@ import { useEffect } from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button";
 
-type ModuleGroup = {
-    id: number;
-    name: string;
-    min_ects: number;
-    max_ects: number;
-}
 
 type Rule = {
     id: number;
@@ -19,6 +13,17 @@ type Rule = {
     module_group: ModuleGroup;
     module_group_id: number;
     academic_year_id: number;
+    route_id: number,
+    route: {
+        name: string,
+    }
+    min_ects: number,
+    max_ects: number
+}
+
+type ModuleGroup = {
+    id: number;
+    name: string;
 }
 
 type Module = {
@@ -59,7 +64,7 @@ export default function ProgramRuleConfig() {
     useEffect(() => {
         const fetchRules = async () => {
             try {
-                const response = await fetch(`/api/rules/?program_id=${programId}&academic_year_id=${academic_year_id}`);
+                const response = await fetch(`/api/rules/?program_id=${programId}`);
                 const result = await response.json();
                 if (!result.success) {
                     throw new Error(result.message);
@@ -76,15 +81,11 @@ export default function ProgramRuleConfig() {
     const handleEdit = (rule : Rule) => {
         setEditingId(rule.id);
         setFormData({
-            name: rule.module_group
-    .name,
-            min_ects: rule.module_group
-    .min_ects,
-            max_ects: rule.module_group
-    .max_ects
+            name: rule.module_group.name,
         });
     }
 
+    //Elective Group Section Operations:
     const handleCancel = () => {
         setEditingId(null);
         setFormData({});
@@ -105,11 +106,8 @@ export default function ProgramRuleConfig() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    module_group_id: rule.module_group
-            .id,
+                    module_group_id: rule.module_group.id,
                     name: formData.name,
-                    min_ects: formData.min_ects,
-                    max_ects: formData.max_ects
                 }),
             });
 
@@ -185,6 +183,19 @@ export default function ProgramRuleConfig() {
             setIncludedModules((prev) => prev.filter(m => m.id !== module.id))
         }
     }
+
+    //Route Section Operation:
+    const rulesByRoute = rules.reduce((acc, rule) => {
+        if (!acc[rule.route_id]) {
+            acc[rule.route_id] = {
+                route_name: rule.route.name,
+                rules:[],
+            };
+        }
+        acc[rule.route_id].rules.push(rule);
+        return acc;
+    }, {} as  Record<string, { route_name: string; rules: Rule[]}>)
+    
     
     return (
         <div className='p-8 space-y-10'>
@@ -213,18 +224,6 @@ export default function ProgramRuleConfig() {
                                         onChange={(e) => handleChange("name", e.target.value)}
                                         className="border rounded px-2 py-1"
                                     />
-                                    <input
-                                        type="number"
-                                        value={formData.min_ects ?? ""}
-                                        onChange={(e) => handleChange("min_ects", e.target.value)}
-                                        className="border rounded px-2 py-1"
-                                    />
-                                    <input
-                                        type="number"
-                                        value={formData.max_ects ?? ""}
-                                        onChange={(e) => handleChange("max_ects", e.target.value)}
-                                        className="border rounded px-2 py-1"
-                                    />
 
                                     <div className="flex space-x-2 justify-end">
                                         <Button variant="ghost" size="sm" onClick={handleCancel}>Cancel</Button>
@@ -240,13 +239,7 @@ export default function ProgramRuleConfig() {
                                     </>
                                 ) : (
                                     <>
-                                    <span className="text-base font-medium capitalize">{rule.module_group
-                            .name}</span>
-                                    <span className="text-base">Min ECTs: {rule.module_group
-                            .min_ects}</span>
-                                    <span className="text-base">Max ECTs: {rule.module_group
-                            .max_ects}</span>
-
+                                    <span className="text-base font-medium capitalize">{rule.module_group.name}</span>
                                     <div className="flex space-x-2 justify-end">
                                         <Button variant="outline" size="sm" onClick={() => handleEdit(rule)}>Edit</Button>
                                         <Button variant="destructive" size="sm" onClick={() => handleDelete(rule)}>Delete</Button>
@@ -315,6 +308,27 @@ export default function ProgramRuleConfig() {
                     </div> 
                 </div>
             )}
+
+            
+            <div className="space-y-8">
+                <h1 className='text-3xl font-bold'>Routes</h1>
+
+                {Object.entries(rulesByRoute).map(([routeId, { route_name, rules }]) => (
+                    <div key={routeId} className="border rounded-lg p-6 bg-white shadow-md">
+                    <h2 className="text-xl font-semibold mb-4">Route: {route_name}</h2>
+                    <div className="space-y-2">
+                        {rules.map((rule) => (
+                        <div key={rule.id} className="flex justify-between items-center border px-4 py-2 rounded-md bg-gray-50">
+                            <div className="font-medium">{rule.module_group.name}</div>
+                            <div className="text-sm text-gray-700">Min ECTS: {rule.min_ects}</div>
+                            <div className="text-sm text-gray-700">Max ECTS: {rule.max_ects}</div>
+                        </div>
+                        ))}
+                    </div>
+                    </div>
+                ))}
+            </div>
+
         </div>
 
     )

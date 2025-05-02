@@ -6,9 +6,8 @@ const prisma = new PrismaClient();
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const program_id = searchParams.get("program_id");
-    const academic_year_id = searchParams.get("academic_year_id");
 
-    if (!program_id || !academic_year_id) {
+    if (!program_id) {
         return NextResponse.json({
             success: false,
             data: null,
@@ -23,12 +22,22 @@ export async function GET(request: NextRequest) {
             where: {
                 deleted_at: null,
                 program_id: parseInt(program_id),
-                academic_year_id: parseInt(academic_year_id)
             },
             include: {
-                module_group: true,
+                route: {
+                    select: {
+                        name: true,
+                    }
+                },
+                module_group: {
+                    select: {
+                        id: true,
+                        name: true,
+                    }
+                },                
             }
         });
+        console.log(rules)
     
         return NextResponse.json({
             success: true,
@@ -42,43 +51,43 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             success: false,
             data: null,
-            message: `Failed to fetch rules for program_id = ${program_id} and academic_year_id = ${academic_year_id}, errorMsg: ${(error as Error).message}`
+            message: `Failed to fetch rules for program_id = ${program_id}, errorMsg: ${(error as Error).message}`
         }, { status: 500 }
         );
     }
 
 }
 
-//Update the module group
-export async function PATCH(request: NextRequest) {
-    try {
-        const body = await request.json();
-        const { module_group_id, name, min_ects, max_ects} = body;
-        const updateData: Prisma.module_groupUpdateInput = {};
-        if (name !== undefined) updateData.name = name;
-        if (min_ects !== undefined) updateData.min_ects = min_ects;
-        if (max_ects !== undefined) updateData.max_ects = max_ects;
+//Update the rule based on rule_id
+// export async function PATCH(request: NextRequest) {
+//     try {
+//         const body = await request.json();
+//         const { rule_id, name, min_ects, max_ects} = body;
+//         const updateData: Prisma.ruleUpdateInput = {};
+//         if (name !== undefined) updateData.name = name;
+//         if (min_ects !== undefined) updateData.min_ects = min_ects;
+//         if (max_ects !== undefined) updateData.max_ects = max_ects;
             
-        const updatedGroupModule = await prisma.module_group.update({
-            where: {
-                id: module_group_id,
-            },
-            data: updateData,
-        });
+//         const updatedGroupModule = await prisma.module_group.update({
+//             where: {
+//                 id: rul,
+//             },
+//             data: updateData,
+//         });
     
-        return NextResponse.json({
-            success: true,
-            data: updatedGroupModule,
-            message: "Module group updated successfully"
-        }, { status: 200 })
-    } catch (error) {
-        console.error("Error updateing module group: ", error);
-        return NextResponse.json({
-            success: false, 
-            message: (error as Error).message,
-        }, { status: 500 })
-    }
-}
+//         return NextResponse.json({
+//             success: true,
+//             data: updatedGroupModule,
+//             message: "Module group updated successfully"
+//         }, { status: 200 })
+//     } catch (error) {
+//         console.error("Error updateing module group: ", error);
+//         return NextResponse.json({
+//             success: false, 
+//             message: (error as Error).message,
+//         }, { status: 500 })
+//     }
+// }
 
 //Delete module_group
 export async function DELETE(request: NextRequest) {
