@@ -28,6 +28,7 @@ model program {
   module_instances module_instance[]
   rules            rule[]
   routes           route[]
+  module_groups    module_group[]
 }
 
 model academic_year {
@@ -134,10 +135,12 @@ model rule {
 model module_group {
     id                Int     @id @default(autoincrement())
     name             String   @db.VarChar(512)
+    program_id        Int  
     created_at       DateTime    @default(now())
     modified_at      DateTime    @default(now()) @updatedAt
     deleted_at       DateTime?   
     
+    program          program    @relation(fields: [program_id], references: [id])
     mappings         module_group_mapping[]
     rules            rule[]
 }
