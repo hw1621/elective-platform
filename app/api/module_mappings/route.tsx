@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
             where: {
                 deleted_at: null,
                 program_id: program_id,
-                academic_year_id: academic_year_id,
             },
             include: {
                 module_group: {
