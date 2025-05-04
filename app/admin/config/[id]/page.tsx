@@ -60,7 +60,7 @@ export default function ProgramRuleConfig() {
     const [routeFormData, setrouteFormData] = useState<Partial<Rule>>({})
     const [editingRouteRuleId, setEditingRuleId] = useState<number | null>(null);
 
-    const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
+    const [showManageModulesModal, setShowManageModulesModal] = useState(false);
     const [moduleMappingCache, setModuleMappingCache] = useState<ModuleMappingCache | null>(null);
     const [includedModules, setIncludedModules] = useState<Module[]>([]);
     const [notIncludedModules, setNotIncludedModules] = useState<Module[]>([]);
@@ -187,6 +187,7 @@ export default function ProgramRuleConfig() {
 
     const handleMangeModules = async (group: ModuleGroup) => {
         seteditingGroupId(group.id);
+        setShowManageModulesModal(true);
 
         if (!moduleMappingCache) {
             try {
@@ -342,12 +343,12 @@ export default function ProgramRuleConfig() {
                     </div>
                 ))}
             </div>
-            {editingGroup && (
+            {showManageModulesModal && editingGroup && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white rounded-lg p-8 w-[1200px] max-w-[90vw] space-y-6">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">Manage Modules for Group {editingGroup.name}</h2>
-                            <Button variant="ghost" onClick={() => seteditingGroupId(null)}>Close</Button>
+                            <Button variant="ghost" onClick={() => {setShowManageModulesModal(false)}}>Close</Button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-8">
@@ -384,7 +385,7 @@ export default function ProgramRuleConfig() {
                         </div>
 
                         <div className="flex justify-end mt-6 space-x-2">
-                            <Button variant="ghost" onClick={() => setSelectedRule(null)}>Cancel</Button>
+                            <Button variant="ghost" onClick={() => setShowManageModulesModal(false)}>Cancel</Button>
                             <Button variant="default" >Save</Button>
                         </div>
                     </div> 
