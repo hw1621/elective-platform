@@ -64,6 +64,8 @@ export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
         const { rule_id, min_ects, max_ects } = body;
+        console.log(typeof(min_ects))
+        console.log(max_ects)
         if (typeof min_ects !== 'number' 
             || typeof max_ects !== 'number'
         ) {

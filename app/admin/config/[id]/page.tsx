@@ -122,7 +122,7 @@ export default function ProgramRuleConfig() {
         if (field === 'min_ects' || field === 'max_ects') {
             setrouteFormData((prev) => ({
                 ...prev,
-                [field]: Number(value),
+                [field]: parseFloat(value),
             }))
         } else {
             setgroupFormData((prev) => ({
@@ -153,6 +153,12 @@ export default function ProgramRuleConfig() {
                 ? { ...g, name: groupFormData.name! } 
                 : g
             )));
+            setRules((prev) => prev.map((r) => 
+                r.module_group_id === group.id 
+                    ? {...r, module_group: {...r.module_group, name:groupFormData.name!}}
+                    : r
+                )
+            );
             seteditingGroupId(null);
         } catch (error) {
             console.error("Error saving module group:", error);
@@ -244,8 +250,8 @@ export default function ProgramRuleConfig() {
                 },
                 body: JSON.stringify({
                     rule_id: rule.id,
-                    min_ects: routeFormData.min_ects,
-                    max_ects: routeFormData.max_ects
+                    min_ects: parseFloat(routeFormData.min_ects + ""),
+                    max_ects: parseFloat(routeFormData.max_ects + ""),
                 }),
             });
             const result = await response.json();
@@ -410,6 +416,7 @@ export default function ProgramRuleConfig() {
                                     <>
                                     <input
                                         type="number"
+                                        step="0.5"
                                         value={routeFormData.min_ects ?? rule.min_ects}
                                         onChange={(e) => handleChange("min_ects", e.target.value)}
                                         className="border px-2 py-1 rounded w-[80px]"
@@ -418,6 +425,7 @@ export default function ProgramRuleConfig() {
                                     <span>—</span>
                                     <input
                                         type="number"
+                                        step="0.5"
                                         value={routeFormData.max_ects ?? rule.max_ects}
                                         onChange={(e) => handleChange("max_ects", e.target.value)}
                                         className="border px-2 py-1 rounded w-[80px]"
