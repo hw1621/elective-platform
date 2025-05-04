@@ -24,6 +24,7 @@ type Rule = {
 type ModuleGroup = {
     id: number;
     name: string;
+    program_id: number;
 }
 
 type Module = {
@@ -47,9 +48,18 @@ export default function ProgramRuleConfig() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const programTitle = searchParams.get("title");
+
     const [rules, setRules] = useState<Rule[]>([])
-    const [formData, setFormData] = useState<Partial<ModuleGroup>>({});
-    const [editingId, setEditingId ] = useState<number | null>(null);
+    const [moduleGroups, setModuleGroups] = useState<ModuleGroup[]>([]);
+
+    //Module Group editing data
+    const [groupFormData, setgroupFormData] = useState<Partial<ModuleGroup>>({});
+    const [editingGroupId, seteditingGroupId ] = useState<number | null>(null);
+
+    //Route rule editing data
+    const [routeFormData, setrouteFormData] = useState<Partial<Rule>>({})
+    const [editingRouteRuleId, setEditingRuleId] = useState<number | null>(null);
+
     const [selectedRule, setSelectedRule] = useState<Rule | null>(null);
     const [moduleMappingCache, setModuleMappingCache] = useState<ModuleMappingCache | null>(null);
     const [includedModules, setIncludedModules] = useState<Module[]>([]);
@@ -71,43 +81,67 @@ export default function ProgramRuleConfig() {
                 }
                 setRules(result.data);
             } catch (error) {
-                console.error("Error fetching rules:", error);
+                console.error("Error fetching rules: ", error);
             }
         };
 
         fetchRules();
     }, [programId]);
 
-    const handleEdit = (rule : Rule) => {
-        setEditingId(rule.id);
-        setFormData({
-            name: rule.module_group.name,
+    useEffect(() => {
+        const fetchModuleGroups = async () => {
+            try {
+                const res = await fetch(`/api/module_group/?program_id=${programId}`)
+                const result = await res.json();
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+                setModuleGroups(result.data);
+            } catch (error) {
+                console.error("Error fetching module groups: ", error);
+                alert("Error fetching module groups")
+            }
+        };
+        fetchModuleGroups();
+    }, [programId])
+
+    //Elective Group Section Operations:
+    const handleGroupEdit = (group : ModuleGroup) => {
+        seteditingGroupId(group.id);
+        setgroupFormData({
+            name: group.name,
         });
     }
 
-    //Elective Group Section Operations:
-    const handleCancel = () => {
-        setEditingId(null);
-        setFormData({});
+    const handleGroupCancel = () => {
+        seteditingGroupId(null);
+        setgroupFormData({});
     }
 
-    const handleChange = (field: keyof ModuleGroup, value: string) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: field.includes("ects") ? Number(value) : value,
-        }));
+    const handleChange = (field: keyof (ModuleGroup & Rule), value: string) => {
+        if (field === 'min_ects' || field === 'max_ects') {
+            setrouteFormData((prev) => ({
+                ...prev,
+                [field]: Number(value),
+            }))
+        } else {
+            setgroupFormData((prev) => ({
+                ...prev,
+                [field]: value,
+            }));            
+        }
     }
 
-    const handleSave = async (rule: Rule) => {
+    const handleGroupSave = async (group: ModuleGroup) => {
         try {
-            const response = await fetch(`/api/rules`, {
+            const response = await fetch(`/api/module_group`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    module_group_id: rule.module_group.id,
-                    name: formData.name,
+                    module_group_id: group.id,
+                    name: groupFormData.name,
                 }),
             });
 
@@ -115,42 +149,44 @@ export default function ProgramRuleConfig() {
             if (!result.success) {
                 throw new Error(result.message);
             }
-            setRules((prev) => prev.map((r) => (r.id === rule.id ? { ...r, module_group: { ...r.module_group, ...formData } } : r)));
-            setEditingId(null);
+            setModuleGroups((prev) => prev.map((g) => (g.id === group.id 
+                ? { ...g, name: groupFormData.name! } 
+                : g
+            )));
+            seteditingGroupId(null);
         } catch (error) {
-            console.error("Error saving rule:", error);
-            alert("Failed to save the rule. Please try again.");
+            console.error("Error saving module group:", error);
+            alert("Failed to save the module group. Please try again.");
         }
     }
 
-    const handleDelete = async (rule: Rule) => {
+    const handleGroupDelete = async (group: ModuleGroup) => {
         const confirmDelete = confirm("Are you sure you want to delete this rule?");
 
         if (!confirmDelete) return;
         try {
-            const response = await fetch(`api/rules`, {
+            const response = await fetch(`api/module_group`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    module_group_id: rule.module_group.id,
-                    rule_id: rule.id,
+                    module_group_id: group.id,
                 }),
             });
             const result = await response.json();
             if (!result.success) {
                 throw new Error(result.message);
             }
-            setRules((prev) => prev.filter((r) => r.id !== rule.id));
+            setModuleGroups((prev) => prev.filter((g) => g.id !== group.id));
         } catch (error) {
-            console.error("Error deleting rule:", error);
-            alert("Failed to delete the rule. Please try again.");
+            console.error("Error deleting module group:", error);
+            alert("Failed to delete the module group. Please try again.");
         }
     }
 
-    const handleMangeModules = async (rule: Rule) => {
-        setSelectedRule(rule);
+    const handleMangeModules = async (group: ModuleGroup) => {
+        seteditingGroupId(group.id);
 
         if (!moduleMappingCache) {
             try {
@@ -161,14 +197,14 @@ export default function ProgramRuleConfig() {
                 }
 
                 setModuleMappingCache(result.data);
-                const currentGroup = result.data.groups.find((group: GroupModules) => group.module_group_id === rule.module_group_id);
+                const currentGroup = result.data.groups.find((gp: GroupModules) => gp.module_group_id === group.id);
                 setIncludedModules(currentGroup?.modules ?? [])
                 setNotIncludedModules(result.data.notIncluded);
             } catch (error) {
                 console.error("Faied to fetch module mappings:", error);
             }
         } else {
-            const currentGroup = moduleMappingCache.groups.find((group: GroupModules) => group.module_group_id === rule.module_group_id);
+            const currentGroup = moduleMappingCache.groups.find((gp: GroupModules) => gp.module_group_id === group.id);
             setIncludedModules(currentGroup?.modules ?? [])
             setNotIncludedModules(moduleMappingCache.notIncluded);
         }
@@ -185,6 +221,49 @@ export default function ProgramRuleConfig() {
     }
 
     //Route Section Operation:
+    const handleRouteCancel = () => {
+        setEditingRuleId(null);
+        setrouteFormData({});
+    }
+
+    const handleRouteEdit = (rule: Rule) => {
+        setEditingRuleId(rule.id);
+        setrouteFormData({
+            min_ects: rule.min_ects,
+            max_ects: rule.max_ects
+        })
+    }
+
+    const handleRouteSave = async (rule: Rule) => {
+        try {
+            const response = await fetch(`/api/rules`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    rule_id: rule.id,
+                    min_ects: routeFormData.min_ects,
+                    max_ects: routeFormData.max_ects
+                }),
+            });
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message)
+            }
+
+            setRules((prev) => prev.map(r => r.id === rule.id 
+                ? {...r, min_ects: routeFormData.min_ects!, max_ects: routeFormData.max_ects!} 
+                : r
+            ))
+            setEditingRuleId(null)
+        } catch (error) {
+            console.error("Failed to save route rules:", error)
+            alert("Failed to save changes")
+        }
+        
+    }
+    
     const rulesByRoute = rules.reduce((acc, rule) => {
         if (!acc[rule.route_id]) {
             acc[rule.route_id] = {
@@ -196,7 +275,8 @@ export default function ProgramRuleConfig() {
         return acc;
     }, {} as  Record<string, { route_name: string; rules: Rule[]}>)
     
-    
+    const editingGroup = moduleGroups.find((g) => g.id === editingGroupId);
+
     return (
         <div className='p-8 space-y-10'>
             <h1 className="text-4xl font-semibold text-gray-900 mb-6">Config of Program {programTitle}</h1>
@@ -206,32 +286,36 @@ export default function ProgramRuleConfig() {
                 <Button variant='outline' onClick={() => router.back()}>
                     Back
                 </Button>
+                <Button variant='outline'>
+                    Import Rule
+                </Button>
             </div>
 
             <div className="space-y-4">
-                {rules.map((rule, index) => (
-                    <div key={rule.id} className="flex items-center space-x-4">
+                {moduleGroups.map((group, index) => (
+                    <div key={group.id} className="flex items-center space-x-4">
                         <div className="w-40 text-lg font-semibold text-gray-700">
                             Elective Group {index + 1}:
                          </div>
                         <div className="w-full">
-                            <div className="grid grid-cols-[1fr_1fr_1fr_auto] items-center border border-gray-300 rounded-lg px-6 py-4 bg-white shadow-sm hover:shadow-md transition gap-4">
-                                {editingId === rule.id ? (
+                            <div className="grid grid-cols-[1fr_auto_auto_auto] items-center border border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm hover:shadow-md transition gap-3 max-w-[900px]">
+                                {editingGroupId === group.id ? (
                                 <>
                                     <input
                                         type="text"
-                                        value={formData.name ?? ""}
+                                        value={groupFormData
+                                .name ?? ""}
                                         onChange={(e) => handleChange("name", e.target.value)}
                                         className="border rounded px-2 py-1"
                                     />
 
                                     <div className="flex space-x-2 justify-end">
-                                        <Button variant="ghost" size="sm" onClick={handleCancel}>Cancel</Button>
-                                        <Button variant="default" size="sm" onClick={() => handleSave(rule)}>Save</Button>
+                                        <Button variant="ghost" size="sm" onClick={handleGroupCancel}>Cancel</Button>
+                                        <Button variant="default" size="sm" onClick={() => handleGroupSave(group)}>Save</Button>
                                         <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleMangeModules(rule)}
+                                        onClick={() => handleMangeModules(group)}
                                         >
                                         Manage Modules
                                         </Button>
@@ -239,14 +323,14 @@ export default function ProgramRuleConfig() {
                                     </>
                                 ) : (
                                     <>
-                                    <span className="text-base font-medium capitalize">{rule.module_group.name}</span>
+                                    <span className="text-base font-medium capitalize">{group.name}</span>
                                     <div className="flex space-x-2 justify-end">
-                                        <Button variant="outline" size="sm" onClick={() => handleEdit(rule)}>Edit</Button>
-                                        <Button variant="destructive" size="sm" onClick={() => handleDelete(rule)}>Delete</Button>
+                                        <Button variant="outline" size="sm" onClick={() => handleGroupEdit(group)}>Edit</Button>
+                                        <Button variant="destructive" size="sm" onClick={() => handleGroupDelete(group)}>Delete</Button>
                                         <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleMangeModules(rule)}
+                                        onClick={() => handleMangeModules(group)}
                                         >
                                         Manage Modules
                                         </Button>
@@ -258,14 +342,12 @@ export default function ProgramRuleConfig() {
                     </div>
                 ))}
             </div>
-
-            {selectedRule && (
+            {editingGroup && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white rounded-lg p-8 w-[1200px] max-w-[90vw] space-y-6">
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-bold">Manage Modules for Group {selectedRule.module_group
-                    .name}</h2>
-                            <Button variant="ghost" onClick={() => setSelectedRule(null)}>Close</Button>
+                            <h2 className="text-xl font-bold">Manage Modules for Group {editingGroup.name}</h2>
+                            <Button variant="ghost" onClick={() => seteditingGroupId(null)}>Close</Button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-8">
@@ -310,24 +392,58 @@ export default function ProgramRuleConfig() {
             )}
 
             
-            <div className="space-y-8">
+            <div className="space-y-4">
                 <h1 className='text-3xl font-bold'>Routes</h1>
 
-                {Object.entries(rulesByRoute).map(([routeId, { route_name, rules }]) => (
-                    <div key={routeId} className="border rounded-lg p-6 bg-white shadow-md">
-                    <h2 className="text-xl font-semibold mb-4">Route: {route_name}</h2>
-                    <div className="space-y-2">
-                        {rules.map((rule) => (
-                        <div key={rule.id} className="flex justify-between items-center border px-4 py-2 rounded-md bg-gray-50">
-                            <div className="font-medium">{rule.module_group.name}</div>
-                            <div className="text-sm text-gray-700">Min ECTS: {rule.min_ects}</div>
-                            <div className="text-sm text-gray-700">Max ECTS: {rule.max_ects}</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {Object.entries(rulesByRoute).map(([routeId, { route_name, rules }]) => (
+                        <div key={routeId} className="border rounded-lg p-3 bg-white shadow-sm">
+                        <h2 className="text-base font-semibold mb-2">Route: {route_name}</h2>
+                        <div className="space-y-2">
+                            {rules.map((rule) => (
+                            <div key={rule.id} className="border px-3 py-2 rounded-md bg-gray-50">
+                                <div className="font-medium text-sm mb-1">{rule.module_group.name}</div>
+                                
+                                <div className="flex items-center justify-between gap-2 text-sm">
+                                {editingRouteRuleId === rule.id ? (
+                                    <>
+                                    <input
+                                        type="number"
+                                        value={routeFormData.min_ects ?? rule.min_ects}
+                                        onChange={(e) => handleChange("min_ects", e.target.value)}
+                                        className="border px-2 py-1 rounded w-[80px]"
+                                        placeholder="Min"
+                                    />
+                                    <span>—</span>
+                                    <input
+                                        type="number"
+                                        value={routeFormData.max_ects ?? rule.max_ects}
+                                        onChange={(e) => handleChange("max_ects", e.target.value)}
+                                        className="border px-2 py-1 rounded w-[80px]"
+                                        placeholder="Max"
+                                    />
+                                    <div className="flex gap-1 ml-auto">
+                                        <Button variant="ghost" size="sm" onClick={handleRouteCancel}>Cancel</Button>
+                                        <Button variant="default" size="sm" onClick={() => handleRouteSave(rule)}>Save</Button>
+                                    </div>
+                                    </>
+                                ) : (
+                                    <>
+                                    <div className="text-gray-700">
+                                        Min: {rule.min_ects} | Max: {rule.max_ects}
+                                    </div>
+                                    <Button variant="outline" size="sm" onClick={() => handleRouteEdit(rule)}>Edit</Button>
+                                    </>
+                                )}
+                                </div>
+                            </div>
+                            ))}
                         </div>
-                        ))}
-                    </div>
-                    </div>
-                ))}
+                        </div>
+                    ))}
+                </div>
             </div>
+
 
         </div>
 
