@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 import { Prisma } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 
 type Selection = {
@@ -59,8 +60,11 @@ export async function POST(request: NextRequest) {
             (sum, mod) => sum.add(new Prisma.Decimal(mod.ects ?? 0)),
             new Prisma.Decimal(0)
           );
-        const min = rule.module_group.min_ects;
-        const max = rule.module_group.max_ects;
+        // const min = rule.module_group.min_ects;
+        // const max = rule.module_group.max_ects;
+
+        const min = Decimal(1.0);
+        const max = Decimal(1.0);
         
         if (min !== null &&  min.gt(selectedEcts) || max !== null && max.lt(selectedEcts)) {
             errors.push({

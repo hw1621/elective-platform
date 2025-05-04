@@ -33,23 +33,23 @@ export async function GET(request: NextRequest) {
                     select: {
                       id: true,
                       name: true,
-                      max_ects: true,
-                      min_ects: true
+                      // max_ects: true,
+                      // min_ects: true
                     }
                   },
-                  module_instance: {
-                    select: {
-                      module: {
-                        select: {
-                          id: true,
-                          code: true,
-                          title: true,
-                          ects: true,
-                          term: true,
-                        }
-                      }
-                    }
-                  }
+                  // module_instance: {
+                  //   select: {
+                  //     module: {
+                  //       select: {
+                  //         id: true,
+                  //         code: true,
+                  //         title: true,
+                  //         ects: true,
+                  //         term: true,
+                  //       }
+                  //     }
+                  //   }
+                  // }
                 }
               } 
             }
@@ -62,7 +62,8 @@ export async function GET(request: NextRequest) {
           return rule.module_group.mappings.map((mapping) => ({
             program_name: program_name,
             module_group: mapping.module_group,
-            module: mapping.module_instance.module }))
+            // module: mapping.module_instance.module 
+          }))
         })
       console.log(flattenedModules)
       return NextResponse.json(flattenedModules)

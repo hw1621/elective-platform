@@ -26,10 +26,11 @@ export async function GET(request: NextRequest) {
             data: groups
         })
     } catch (error) {
+        console.error("Error fetching module groups", error)
         return NextResponse.json({
             success: false,
             data: null,
-            message: "Fetch elective groups fail"
+            message: "Fetch module groups fail"
         }, { status: 500 })
     }
 }
