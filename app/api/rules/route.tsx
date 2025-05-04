@@ -3,6 +3,7 @@ import { NextResponse, NextRequest } from "next/server";
 
 const prisma = new PrismaClient();
 
+//Fetch all rules under given program_id
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const program_id = searchParams.get("program_id");
@@ -58,78 +59,40 @@ export async function GET(request: NextRequest) {
 
 }
 
-//Update the rule based on rule_id
-// export async function PATCH(request: NextRequest) {
-//     try {
-//         const body = await request.json();
-//         const { rule_id, name, min_ects, max_ects} = body;
-//         const updateData: Prisma.ruleUpdateInput = {};
-//         if (name !== undefined) updateData.name = name;
-//         if (min_ects !== undefined) updateData.min_ects = min_ects;
-//         if (max_ects !== undefined) updateData.max_ects = max_ects;
-            
-//         const updatedGroupModule = await prisma.module_group.update({
-//             where: {
-//                 id: rul,
-//             },
-//             data: updateData,
-//         });
-    
-//         return NextResponse.json({
-//             success: true,
-//             data: updatedGroupModule,
-//             message: "Module group updated successfully"
-//         }, { status: 200 })
-//     } catch (error) {
-//         console.error("Error updateing module group: ", error);
-//         return NextResponse.json({
-//             success: false, 
-//             message: (error as Error).message,
-//         }, { status: 500 })
-//     }
-// }
-
-//Delete module_group
-export async function DELETE(request: NextRequest) {
+// Update the rule based on rule_id
+export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
-        const { module_group_id, rule_id } = body;
-        if (!module_group_id || !rule_id) {
+        const { rule_id, min_ects, max_ects } = body;
+        if (typeof min_ects !== 'number' 
+            || typeof max_ects !== 'number'
+        ) {
             return NextResponse.json({
                 success: false,
-                message: "Missing module_group_id or rule_idparameter"
-            }, { status: 400 });
+                message: "Invalid min_ects or max_ects"
+            }, { status: 400 })
         }
-
-        const now = new Date();
-        await prisma.$transaction([
-            prisma.rule.updateMany({
-                where: {
-                    id: rule_id
-                },
-                data: {
-                    deleted_at: now
-                }
-            }),
-            prisma.module_group.update({
-                where: {
-                    id: module_group_id
-                },
-                data: {
-                    deleted_at: now
-                }
-            })
-        ]);
-
+                 
+        const updatedRule = await prisma.rule.update({
+            where: {
+                id: rule_id,
+            },
+            data: {
+                min_ects,
+                max_ects,
+            },
+        });
+    
         return NextResponse.json({
             success: true,
-            message: "Module group deleted successfully"
-        }, { status: 200 });
+            data: updatedRule,
+            message: "Rule updated successfully"
+        }, { status: 200 })
     } catch (error) {
-        console.error("Error deleting module group: ", error);
+        console.error("Error updateing rule: ", error);
         return NextResponse.json({
-            success: false,
+            success: false, 
             message: (error as Error).message,
-        }, { status: 500 });
+        }, { status: 500 })
     }
 }
