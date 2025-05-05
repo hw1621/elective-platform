@@ -408,44 +408,54 @@ export default function ProgramRuleConfig() {
                         <h2 className="text-base font-semibold mb-2">Route: {route_name}</h2>
                         <div className="space-y-2">
                             {rules.map((rule) => (
-                            <div key={rule.id} className="border px-3 py-2 rounded-md bg-gray-50">
-                                <div className="font-medium text-sm mb-1">{rule.module_group.name}</div>
-                                
-                                <div className="flex items-center justify-between gap-2 text-sm">
-                                {editingRouteRuleId === rule.id ? (
-                                    <>
-                                    <input
-                                        type="number"
-                                        step="0.5"
-                                        value={routeFormData.min_ects ?? rule.min_ects}
-                                        onChange={(e) => handleChange("min_ects", e.target.value)}
-                                        className="border px-2 py-1 rounded w-[80px]"
-                                        placeholder="Min"
-                                    />
-                                    <span>—</span>
-                                    <input
-                                        type="number"
-                                        step="0.5"
-                                        value={routeFormData.max_ects ?? rule.max_ects}
-                                        onChange={(e) => handleChange("max_ects", e.target.value)}
-                                        className="border px-2 py-1 rounded w-[80px]"
-                                        placeholder="Max"
-                                    />
-                                    <div className="flex gap-1 ml-auto">
-                                        <Button variant="ghost" size="sm" onClick={handleRouteCancel}>Cancel</Button>
-                                        <Button variant="default" size="sm" onClick={() => handleRouteSave(rule)}>Save</Button>
+                                <div key={rule.id} className="border px-3 py-2 rounded-md bg-gray-50">
+                                    <div className="grid grid-cols-[1fr_120px_120px_auto] items-center gap-4 text-sm">
+                                        <div className="font-medium text-gray-900">{rule.module_group.name}</div>
+
+                                        {editingRouteRuleId === rule.id ? (
+                                        <>
+                                            <div className="flex flex-col">
+                                            <span className="text-xs text-gray-500">Min</span>
+                                            <input
+                                                type="number"
+                                                step="0.5"
+                                                value={routeFormData.min_ects ?? rule.min_ects}
+                                                onChange={(e) => handleChange("min_ects", e.target.value)}
+                                                className="border px-2 py-1 rounded"
+                                                placeholder="Min"
+                                            />
+                                            </div>
+                                            <div className="flex flex-col">
+                                            <span className="text-xs text-gray-500">Max</span>
+                                            <input
+                                                type="number"
+                                                step="0.5"
+                                                value={routeFormData.max_ects ?? rule.max_ects}
+                                                onChange={(e) => handleChange("max_ects", e.target.value)}
+                                                className="border px-2 py-1 rounded"
+                                                placeholder="Max"
+                                            />
+                                            </div>
+                                            <div className="flex gap-1 justify-end">
+                                            <Button variant="ghost" size="sm" onClick={handleRouteCancel}>Cancel</Button>
+                                            <Button variant="default" size="sm" onClick={() => handleRouteSave(rule)}>Save</Button>
+                                            </div>
+                                        </>
+                                        ) : (
+                                        <>
+                                            <div className="text-gray-900 font-medium">
+                                            <span className="text-xs text-gray-500 mr-1">Min</span>
+                                            {rule.min_ects}
+                                            </div>
+                                            <div className="text-gray-900 font-medium">
+                                            <span className="text-xs text-gray-500 mr-1">Max</span>
+                                            {rule.max_ects}
+                                            </div>
+                                            <Button variant="outline" size="sm" className="justify-self-end" onClick={() => handleRouteEdit(rule)}>Edit</Button>
+                                        </>
+                                        )}
                                     </div>
-                                    </>
-                                ) : (
-                                    <>
-                                    <div className="text-gray-700">
-                                        Min: {rule.min_ects} | Max: {rule.max_ects}
-                                    </div>
-                                    <Button variant="outline" size="sm" onClick={() => handleRouteEdit(rule)}>Edit</Button>
-                                    </>
-                                )}
                                 </div>
-                            </div>
                             ))}
                         </div>
                         </div>
