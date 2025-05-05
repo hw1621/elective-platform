@@ -87,3 +87,58 @@ export async function GET(request: NextRequest) {
         }, { status: 500 });
     }
 }
+
+export async function POST(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { module_group_id, added_module_ids = [], removed_module_ids = [] } = body;
+    
+        if (!module_group_id || (!Array.isArray(added_module_ids) || !Array.isArray(removed_module_ids))) {
+          return NextResponse.json({ success: false, message: "Invalid parameters of updating module group mappings request" }, { status: 400 });
+        }
+
+        const now = new Date();
+        const operations = [
+            ...added_module_ids.map((module_id: number) => 
+                prisma.module_group_mapping.upsert({
+                    where: {
+                        module_group_id_module_id: {
+                            module_group_id,
+                            module_id,
+                        }
+                    },
+                    update: {
+                        deleted_at: null,
+                    },
+                    create: {
+                        module_group_id,
+                        module_id,
+                    },
+                })
+            ),
+            ...removed_module_ids.map((module_id: number) => 
+                prisma.module_group_mapping.updateMany({
+                    where: {
+                        module_group_id,
+                        module_id,
+                    },
+                    data: {
+                        deleted_at: now
+                    }
+                })
+            )
+        ];
+
+        await prisma.$transaction(operations);
+        return NextResponse.json({
+            success: true,
+            message: "Update module group mappings successfully"
+        })
+    } catch (error) {
+        console.error("[POST /api/module_mappings] Update module group mappings error:", error)
+        return NextResponse.json({
+            success: false,
+            message: `Fail to update module group mappings, errMsg: ${(error as Error).message}`
+        })
+    }
+}
