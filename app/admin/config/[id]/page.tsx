@@ -215,7 +215,7 @@ export default function ProgramRuleConfig() {
                 }
                 setStates(result.data, group.id);
             } catch (error) {
-                console.error("Faied to fetch module mappings:", error);
+                console.error("Failed to fetch module mappings:", error);
             }
         } else {
             setStates(moduleMappingCache, group.id);
