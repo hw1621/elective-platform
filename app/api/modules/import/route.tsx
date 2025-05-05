@@ -12,10 +12,11 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: false, message: "No modules to import" }, { status: 400 });
         }
 
-        const academicYearId = modules[0]?.academic_year_id;
-        if (!academicYearId) {
-            return NextResponse.json({ success: false, message: "First record missing academic_year_id" }, { status: 400 });
+        const yearSet = new Set(modules.map(m => m.academic_year_id));
+        if (yearSet.size !== 1) {
+          return NextResponse.json({ success: false, message: "All modules must have the same academic_year_id" }, { status: 400 });
         }
+        const academicYearId = [...yearSet][0];        
 
         const existingModules = await prisma.module.findMany({
             where: {
@@ -60,7 +61,10 @@ export async function POST(request: NextRequest) {
 
         await prisma.$transaction([...updates, ...inserts]);
 
-        return NextResponse.json({ success: true, message: "Modules imported successfully" });
+        return NextResponse.json({ 
+            success: true, 
+            message: `Modules imported successfully: ${inserts.length} inserted, ${updates.length} updated`,
+        });
 
     } catch (error) {
         return NextResponse.json(
