@@ -54,7 +54,7 @@ export default function ProgramRuleConfig() {
 
     //Module Group editing data
     const [groupFormData, setgroupFormData] = useState<Partial<ModuleGroup>>({});
-    const [editingGroupId, seteditingGroupId ] = useState<number | null>(null);
+    const [editingGroupId, setEditingGroupId ] = useState<number | null>(null);
 
     //Route rule editing data
     const [routeFormData, setrouteFormData] = useState<Partial<Rule>>({})
@@ -62,6 +62,7 @@ export default function ProgramRuleConfig() {
 
     const [showManageModulesModal, setShowManageModulesModal] = useState(false);
     const [moduleMappingCache, setModuleMappingCache] = useState<ModuleMappingCache | null>(null);
+    const [initialIncludedModules, setInitialIncludedModules] = useState<Set<number>>(new Set<number>());
     const [includedModules, setIncludedModules] = useState<Module[]>([]);
     const [notIncludedModules, setNotIncludedModules] = useState<Module[]>([]);
 
@@ -107,14 +108,14 @@ export default function ProgramRuleConfig() {
 
     //Elective Group Section Operations:
     const handleGroupEdit = (group : ModuleGroup) => {
-        seteditingGroupId(group.id);
+    setEditingGroupId(group.id);
         setgroupFormData({
             name: group.name,
         });
     }
 
     const handleGroupCancel = () => {
-        seteditingGroupId(null);
+    setEditingGroupId(null);
         setgroupFormData({});
     }
 
@@ -159,7 +160,7 @@ export default function ProgramRuleConfig() {
                     : r
                 )
             );
-            seteditingGroupId(null);
+        setEditingGroupId(null);
         } catch (error) {
             console.error("Error saving module group:", error);
             alert("Failed to save the module group. Please try again.");
@@ -185,14 +186,24 @@ export default function ProgramRuleConfig() {
                 throw new Error(result.message);
             }
             setModuleGroups((prev) => prev.filter((g) => g.id !== group.id));
+            setRules((prev) => prev.filter(rule => rule.module_group_id !== group.id));
         } catch (error) {
             console.error("Error deleting module group:", error);
             alert("Failed to delete the module group. Please try again.");
         }
     }
 
-    const handleMangeModules = async (group: ModuleGroup) => {
-        seteditingGroupId(group.id);
+    const setStates = (data: ModuleMappingCache, groupId: number) => {
+        setModuleMappingCache(data);
+        const currentGroup = data.groups.find((gp: GroupModules) => gp.module_group_id === groupId);
+        const included = currentGroup?.modules ?? [];
+        setIncludedModules(included);
+        setInitialIncludedModules(new Set(included.map((m) => m.id)));
+        setNotIncludedModules(data.notIncluded);
+    }
+
+    const handleManageModules = async (group: ModuleGroup) => {
+        setEditingGroupId(group.id);
         setShowManageModulesModal(true);
 
         if (!moduleMappingCache) {
@@ -202,18 +213,12 @@ export default function ProgramRuleConfig() {
                 if (!result.success) {
                     throw new Error(result.message);
                 }
-
-                setModuleMappingCache(result.data);
-                const currentGroup = result.data.groups.find((gp: GroupModules) => gp.module_group_id === group.id);
-                setIncludedModules(currentGroup?.modules ?? [])
-                setNotIncludedModules(result.data.notIncluded);
+                setStates(result.data, group.id);
             } catch (error) {
                 console.error("Faied to fetch module mappings:", error);
             }
         } else {
-            const currentGroup = moduleMappingCache.groups.find((gp: GroupModules) => gp.module_group_id === group.id);
-            setIncludedModules(currentGroup?.modules ?? [])
-            setNotIncludedModules(moduleMappingCache.notIncluded);
+            setStates(moduleMappingCache, group.id);
         }
     }
 
@@ -224,6 +229,61 @@ export default function ProgramRuleConfig() {
         } else {
             setNotIncludedModules((prev) => [...prev, module]);
             setIncludedModules((prev) => prev.filter(m => m.id !== module.id))
+        }
+    }
+
+    //Update data in mapping cache 
+    const refreshMappings = async () => {
+        try {
+            const refreshMapping = await fetch(`/api/module_mappings?academic_year_id=${academic_year_id}&program_id=${programId}`);
+            const result = await refreshMapping.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            setModuleMappingCache(result.data);
+        } catch (error) {
+            console.error("Failed to refetch mappings:", error);
+        }
+    }
+
+    const handleSaveModules = async () => {
+        if (!editingGroupId) {
+            return
+        }
+
+        const currentIdSet = new Set(includedModules.map((mod) => mod.id));
+
+        const added = [...currentIdSet].filter(id => !initialIncludedModules.has(id));
+        const removed = [...initialIncludedModules].filter(id => !currentIdSet.has(id));
+
+        if (added.length === 0 && removed.length === 0) {
+            alert("No changes to save")
+            return
+        }
+
+        try {
+            const response = await fetch('/api/module_mappings', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    module_group_id: editingGroupId,
+                    added_module_ids: added,
+                    removed_module_ids: removed,
+                })
+            })
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            alert("Module Group updated successfully")
+            setShowManageModulesModal(false);
+            setEditingGroupId(null)
+            await refreshMappings();
+        } catch (error) {
+            console.error("Failed to save modules:", error);
+            alert("Failed to save modules");
         }
     }
 
@@ -322,7 +382,7 @@ export default function ProgramRuleConfig() {
                                         <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleMangeModules(group)}
+                                        onClick={() => handleManageModules(group)}
                                         >
                                         Manage Modules
                                         </Button>
@@ -337,7 +397,7 @@ export default function ProgramRuleConfig() {
                                         <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleMangeModules(group)}
+                                        onClick={() => handleManageModules(group)}
                                         >
                                         Manage Modules
                                         </Button>
@@ -391,8 +451,8 @@ export default function ProgramRuleConfig() {
                         </div>
 
                         <div className="flex justify-end mt-6 space-x-2">
-                            <Button variant="ghost" onClick={() => setShowManageModulesModal(false)}>Cancel</Button>
-                            <Button variant="default" >Save</Button>
+                            <Button variant="ghost" onClick={() => {setShowManageModulesModal(false); setEditingGroupId(null)}}>Cancel</Button>
+                            <Button variant="default" onClick={() => handleSaveModules()}>Save</Button>
                         </div>
                     </div> 
                 </div>
