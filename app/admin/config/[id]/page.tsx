@@ -206,7 +206,7 @@ export default function ProgramRuleConfig() {
 
         if (!confirmDelete) return;
         try {
-            const response = await fetch(`api/module_group`, {
+            const response = await fetch(`/api/module_group`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",

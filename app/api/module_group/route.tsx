@@ -89,7 +89,7 @@ export async function DELETE(request: NextRequest) {
         await prisma.$transaction([
             prisma.module_group.update({
                 where: {
-                    id: module_group_id,
+                    id: Number(module_group_id),
                     deleted_at: null,
                 },
                 data: {
@@ -98,7 +98,7 @@ export async function DELETE(request: NextRequest) {
             }),
             prisma.rule.updateMany({
                 where: {
-                    module_group_id: module_group_id,
+                    module_group_id: Number(module_group_id),
                     deleted_at: null,
                 },
                 data: {
