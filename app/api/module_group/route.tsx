@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
             where: {
                 program_id: Number(program_id),
                 deleted_at: null
+            },
+            orderBy: {
+                name: "asc"
             }
         })
         return NextResponse.json({
@@ -26,7 +29,7 @@ export async function GET(request: NextRequest) {
             data: groups
         })
     } catch (error) {
-        console.error("Error fetching module groups", error)
+        console.error("[GET /api/module_group] Error fetching module groups", error)
         return NextResponse.json({
             success: false,
             data: null,
@@ -40,8 +43,15 @@ export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
         const { module_group_id , name } = body;
+
+        if (!module_group_id || typeof name !== "string" || name.trim() === "") {
+            return NextResponse.json({
+              success: false,
+              message: "Invalid module_group_id or name"
+            }, { status: 400 });
+          }
                  
-        const updatedRule = await prisma.module_group.update({
+        const updatedGroup = await prisma.module_group.update({
             where: {
                 id: module_group_id,
             },
@@ -52,11 +62,11 @@ export async function PATCH(request: NextRequest) {
     
         return NextResponse.json({
             success: true,
-            data: updatedRule,
+            data: updatedGroup,
             message: "Module group updated successfully"
         }, { status: 200 })
     } catch (error) {
-        console.error("Error updateing module group: ", error);
+        console.error("[PATCH /api/module_group] Error updateing module group: ", error);
         return NextResponse.json({
             success: false, 
             message: (error as Error).message,
@@ -79,7 +89,8 @@ export async function DELETE(request: NextRequest) {
         await prisma.$transaction([
             prisma.module_group.update({
                 where: {
-                    id: module_group_id
+                    id: module_group_id,
+                    deleted_at: null,
                 },
                 data: {
                     deleted_at: now
@@ -87,7 +98,8 @@ export async function DELETE(request: NextRequest) {
             }),
             prisma.rule.updateMany({
                 where: {
-                    module_group_id: module_group_id
+                    module_group_id: module_group_id,
+                    deleted_at: null,
                 },
                 data: {
                     deleted_at: now
@@ -100,10 +112,43 @@ export async function DELETE(request: NextRequest) {
             message: "Module group deleted successfully"
         }, { status: 200 });
     } catch (error) {
-        console.error("Error deleting module group: ", error);
+        console.error("[DELETE /api/module_group] Error deleting module group: ", error);
         return NextResponse.json({
             success: false,
             message: (error as Error).message,
         }, { status: 500 });
+    }
+}
+
+//Add new module group
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { name, program_id } = body;
+        if (!name || !program_id) {
+            return NextResponse.json(
+              { success: false, message: "Invalid name or program_id" },
+              { status: 400 }
+            );
+        }
+
+        const newGroup = await prisma.module_group.create({
+            data: {
+                name,
+                program_id
+            }
+        });
+
+        return NextResponse.json({
+            success:true,
+            data: newGroup,
+            message: "Module group created successfully"
+        });
+    } catch (error) {
+        console.error("[POST /api/module_group] Error creating module group:", error);
+        return NextResponse.json({
+            success: false,
+            message: `Failed to create module group: ${(error as Error).message}`
+        }, { status: 500 })
     }
 }
