@@ -55,6 +55,8 @@ export default function ProgramRuleConfig() {
     //Module Group editing data
     const [groupFormData, setgroupFormData] = useState<Partial<ModuleGroup>>({});
     const [editingGroupId, setEditingGroupId ] = useState<number | null>(null);
+    const [creatingNewGroup, setCreatingNewGroup] = useState(false);
+    const [newGroupName, setNewGroupName] = useState("");
 
     //Route rule editing data
     const [routeFormData, setrouteFormData] = useState<Partial<Rule>>({})
@@ -164,6 +166,38 @@ export default function ProgramRuleConfig() {
         } catch (error) {
             console.error("Error saving module group:", error);
             alert("Failed to save the module group. Please try again.");
+        }
+    }
+
+    const handleCreateGroup = async () => {
+        if (!newGroupName.trim()) {
+            alert("Group name can't be empty")
+            return;
+        }
+
+        try {
+            const response = await fetch("/api/module_group", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: newGroupName,
+                    program_id: programId,
+                })
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            
+            setModuleGroups((prev) => [...prev, result.data])
+            setNewGroupName("");
+            setCreatingNewGroup(false);
+        } catch (error) {
+            console.error("Error creating module group:", error);
+            alert("Failed to create module group")
         }
     }
 
@@ -350,6 +384,9 @@ export default function ProgramRuleConfig() {
 
             <div className="flex items-center gap-4">
                 <h1 className='text-3xl font-bold'>Elective Groups</h1>
+                <Button variant='outline' onClick={() => setCreatingNewGroup(true)}>
+                    Add Group
+                </Button>
                 <Button variant='outline' onClick={() => router.back()}>
                     Back
                 </Button>
@@ -359,56 +396,72 @@ export default function ProgramRuleConfig() {
             </div>
 
             <div className="space-y-4">
-                {moduleGroups.map((group, index) => (
-                    <div key={group.id} className="flex items-center space-x-4">
-                        <div className="w-40 text-lg font-semibold text-gray-700">
-                            Elective Group {index + 1}:
-                         </div>
-                        <div className="w-full">
-                            <div className="grid grid-cols-[1fr_auto_auto_auto] items-center border border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm hover:shadow-md transition gap-3 max-w-[900px]">
-                                {editingGroupId === group.id ? (
-                                <>
-                                    <input
-                                        type="text"
-                                        value={groupFormData
-                                .name ?? ""}
-                                        onChange={(e) => handleChange("name", e.target.value)}
-                                        className="border rounded px-2 py-1"
-                                    />
-
-                                    <div className="flex space-x-2 justify-end">
-                                        <Button variant="ghost" size="sm" onClick={handleGroupCancel}>Cancel</Button>
-                                        <Button variant="default" size="sm" onClick={() => handleGroupSave(group)}>Save</Button>
-                                        <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleManageModules(group)}
-                                        >
-                                        Manage Modules
-                                        </Button>
-                                    </div>
-                                    </>
-                                ) : (
-                                    <>
-                                    <span className="text-base font-medium capitalize">{group.name}</span>
-                                    <div className="flex space-x-2 justify-end">
-                                        <Button variant="outline" size="sm" onClick={() => handleGroupEdit(group)}>Edit</Button>
-                                        <Button variant="destructive" size="sm" onClick={() => handleGroupDelete(group)}>Delete</Button>
-                                        <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleManageModules(group)}
-                                        >
-                                        Manage Modules
-                                        </Button>
-                                    </div>
-                                </>
-                                )}
-                            </div>
-                        </div>
+            {[...moduleGroups, ...(creatingNewGroup ? [{} as ModuleGroup] : [])].map((group, index) => (
+                <div key={group.id ?? `new-${index}`} className="flex items-center space-x-4">
+                    <div className="w-40 text-lg font-semibold text-gray-700">
+                    Elective Group {index + 1}:
                     </div>
-                ))}
+                    <div className="w-full">
+                    <div className="grid grid-cols-[1fr_auto_auto_auto] items-center border border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm gap-3 max-w-[900px]">
+                        {group.id === undefined ? (
+                        <>
+                            <input
+                            type="text"
+                            value={newGroupName}
+                            onChange={(e) => setNewGroupName(e.target.value)}
+                            className="border rounded px-2 py-1"
+                            placeholder="New group name"
+                            />
+                            <div className="flex space-x-2 justify-end">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                setCreatingNewGroup(false);
+                                setNewGroupName("");
+                                }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                variant="default"
+                                size="sm"
+                                onClick={handleCreateGroup}
+                            >
+                                Save
+                            </Button>
+                            </div>
+                        </>
+                        ) : editingGroupId === group.id ? ( // 👈 编辑已有分组
+                        <>
+                            <input
+                            type="text"
+                            value={groupFormData.name ?? ""}
+                            onChange={(e) => handleChange("name", e.target.value)}
+                            className="border rounded px-2 py-1"
+                            />
+                            <div className="flex space-x-2 justify-end">
+                            <Button variant="ghost" size="sm" onClick={handleGroupCancel}>Cancel</Button>
+                            <Button variant="default" size="sm" onClick={() => handleGroupSave(group)}>Save</Button>
+                            <Button variant="outline" size="sm" onClick={() => handleManageModules(group)}>Manage Modules</Button>
+                            </div>
+                        </>
+                        ) : ( // 👈 正常显示已有分组
+                        <>
+                            <span className="text-base font-medium capitalize">{group.name}</span>
+                            <div className="flex space-x-2 justify-end">
+                            <Button variant="outline" size="sm" onClick={() => handleGroupEdit(group)}>Edit</Button>
+                            <Button variant="destructive" size="sm" onClick={() => handleGroupDelete(group)}>Delete</Button>
+                            <Button variant="outline" size="sm" onClick={() => handleManageModules(group)}>Manage Modules</Button>
+                            </div>
+                        </>
+                        )}
+                    </div>
+                    </div>
+                </div>
+            ))}
             </div>
+
             {showManageModulesModal && editingGroup && (
                 <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white rounded-lg p-8 w-[1200px] max-w-[90vw] space-y-6">
