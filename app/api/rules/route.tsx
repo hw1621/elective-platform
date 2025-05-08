@@ -98,3 +98,47 @@ export async function PATCH(request: NextRequest) {
         }, { status: 500 })
     }
 }
+
+//Insert new rules 
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { program_id, route_id, module_group_id, academic_year_id, min_ects, max_ects } = body
+        if (
+            !program_id ||
+            !route_id ||
+            !module_group_id ||
+            !academic_year_id ||
+            min_ects === undefined ||
+            max_ects === undefined
+        ) {
+            return NextResponse.json(
+                { success: false, message: "Missing or invalid rule parameters"}
+            )
+        } 
+        const newRule = await prisma.rule.create({
+            data: {
+                program_id,
+                route_id,
+                module_group_id,
+                academic_year_id,
+                min_ects,
+                max_ects
+            }
+        })
+
+        return NextResponse.json({
+            success: true,
+            data: newRule,
+        })
+    } catch (error) {
+        console.error("[POST /api/rules] Failed to create route rule:", error);
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Failed to create rule: ${(error as Error).message}`,
+          }
+        );
+    }
+}
+

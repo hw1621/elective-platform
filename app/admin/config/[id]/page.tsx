@@ -5,44 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button";
+import { exportProgramRulesToExcel } from "@/utils/parseExcelToModules";
+import { GroupModules, Module, ModuleGroup, ModuleMappingCache, Rule } from "@/types/rule-types";
 
-
-type Rule = {
-    id: number;
-    program_id: number;
-    module_group: ModuleGroup;
-    module_group_id: number;
-    academic_year_id: number;
-    route_id: number,
-    route: {
-        name: string,
-    }
-    min_ects: number,
-    max_ects: number
-}
-
-type ModuleGroup = {
-    id: number;
-    name: string;
-    program_id: number;
-}
-
-type Module = {
-    id: number;
-    code: string;
-    title: string;
-}
-
-type GroupModules = {
-    module_group_id: number;
-    module_group_name: string;
-    modules: Module[];
-}
-
-type ModuleMappingCache = {
-    groups: GroupModules[];
-    notIncluded: Module[];
-}
 
 export default function ProgramRuleConfig() {
     const router = useRouter();
@@ -61,6 +26,10 @@ export default function ProgramRuleConfig() {
     //Route rule editing data
     const [routeFormData, setrouteFormData] = useState<Partial<Rule>>({})
     const [editingRouteRuleId, setEditingRuleId] = useState<number | null>(null);
+    //RouteId for new created rule
+    const [creatingRuleRouteId, setCreatingRuleRouteId] = useState<number | null>(null)
+    //Data for new created rule
+    const [newRuleForm, setNewRuleForm] = useState<Partial<Rule>>({});
 
     const [showManageModulesModal, setShowManageModulesModal] = useState(false);
     const [moduleMappingCache, setModuleMappingCache] = useState<ModuleMappingCache | null>(null);
@@ -266,7 +235,7 @@ export default function ProgramRuleConfig() {
         }
     }
 
-    //Update data in mapping cache 
+    //Refetch modules group mappings (used as refreshing mechanism)
     const refreshMappings = async () => {
         try {
             const refreshMapping = await fetch(`/api/module_mappings?academic_year_id=${academic_year_id}&program_id=${programId}`);
@@ -275,6 +244,7 @@ export default function ProgramRuleConfig() {
                 throw new Error(result.message);
             }
             setModuleMappingCache(result.data);
+            return result.data
         } catch (error) {
             console.error("Failed to refetch mappings:", error);
         }
@@ -362,8 +332,68 @@ export default function ProgramRuleConfig() {
             console.error("Failed to save route rules:", error)
             alert("Failed to save changes")
         }
-        
     }
+    
+    const handleCreateRouteRule = async (routeId: number) => {
+        if (!newRuleForm.module_group_id || 
+            newRuleForm.min_ects === undefined || 
+            newRuleForm.max_ects === undefined
+        ) {
+            alert("Please complete all fields")
+            return;
+        }
+
+        try {
+            const response = await fetch("/api/rules", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  program_id: programId,
+                  route_id: routeId,
+                  academic_year_id,
+                  module_group_id: newRuleForm.module_group_id,
+                  min_ects: newRuleForm.min_ects,
+                  max_ects: newRuleForm.max_ects,
+                }),
+            });
+
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+
+            setCreatingRuleRouteId(null);
+            setNewRuleForm({});
+            setRules((prev) => [...prev, 
+                {
+                  ...result.data,
+                  route: { name: rulesByRoute[routeId].route_name },
+                  module_group: moduleGroups.find(g => g.id === newRuleForm.module_group_id)!
+                }
+            ])
+        } catch (error) {
+            console.error("Failed to create rule:", error);
+            alert("Failed to create rule, please try again.");
+        }
+    }
+
+    //Refetch route rules (used as refreshing mechanism)
+    // const refreshRouteRules = async () => {
+    //     try {
+    //         const refreshed = await fetch(`/api/rules/?program_id=${programId}`);
+    //         const result = await refreshed.json();
+    //         if (!result.success) {
+    //             throw new Error(result.message);
+    //         }
+    //         setRules(result.data);
+    //     } catch (error) {
+    //         console.error("Failed to refetch route rules:", error);
+    //         alert("Failed to refresh route rules after inserting new rule");
+    //     }
+    // }
+    
     
     const rulesByRoute = rules.reduce((acc, rule) => {
         if (!acc[rule.route_id]) {
@@ -378,20 +408,39 @@ export default function ProgramRuleConfig() {
     
     const editingGroup = moduleGroups.find((g) => g.id === editingGroupId);
 
+    const usedGroupIds = new Set(rules.map(r => r.module_group_id));
+
     return (
         <div className='p-8 space-y-10'>
-            <h1 className="text-4xl font-semibold text-gray-900 mb-6">Config of Program {programTitle}</h1>
+            <div className='flex items-center justify-between mb-6'>
+                <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 font-serif">
+                    Configuration of Program {programTitle}
+                </h1>
+                <Button variant='link'className='text-blue-600 underline hover:text-blue-800 px-0' onClick={() => router.back()}>
+                        Back
+                </Button>
+            </div>
 
             <div className="flex items-center gap-4">
                 <h1 className='text-3xl font-bold'>Elective Groups</h1>
                 <Button variant='outline' onClick={() => setCreatingNewGroup(true)}>
                     Add Group
                 </Button>
-                <Button variant='outline' onClick={() => router.back()}>
-                    Back
-                </Button>
                 <Button variant='outline'>
                     Import Rule
+                </Button>
+                <Button variant='outline' onClick={ async () => {
+                    let cache = moduleMappingCache;
+                    if (!cache) {
+                        cache =await refreshMappings();
+                    }
+                    if (cache) {
+                        exportProgramRulesToExcel(programTitle, moduleGroups, rules, cache)
+                    } else {
+                        alert("Failed to load module mappings. Please try again.");
+                    }
+                }}>
+                    Export Rule
                 </Button>
             </div>
 
@@ -518,59 +567,140 @@ export default function ProgramRuleConfig() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {Object.entries(rulesByRoute).map(([routeId, { route_name, rules }]) => (
                         <div key={routeId} className="border rounded-lg p-3 bg-white shadow-sm">
-                        <h2 className="text-base font-semibold mb-2">Route: {route_name}</h2>
-                        <div className="space-y-2">
-                            {rules.map((rule) => (
-                                <div key={rule.id} className="border px-3 py-2 rounded-md bg-gray-50">
-                                    <div className="grid grid-cols-[1fr_120px_120px_auto] items-center gap-4 text-sm">
-                                        <div className="font-medium text-gray-900">{rule.module_group.name}</div>
+                            <div className="flex items-center justify-between mb-2">
+                                <h2 className="text-xl font-semibold">{route_name}</h2>
+                                <Button
+                                    variant="link"
+                                    className="text-blue-600 underline hover:text-blue-800 px-0"
+                                    onClick={() => {
+                                        setCreatingRuleRouteId(parseInt(routeId))
+                                        setNewRuleForm({ min_ects: 0, max_ects: 0, module_group_id: undefined })
+                                    }}
+                                >
+                                    + Add Rule
+                                </Button>
+                            </div>
+                        
 
-                                        {editingRouteRuleId === rule.id ? (
-                                        <>
-                                            <div className="flex flex-col">
-                                            <span className="text-xs text-gray-500">Min</span>
-                                            <input
-                                                type="number"
-                                                step="0.5"
-                                                value={routeFormData.min_ects ?? rule.min_ects}
-                                                onChange={(e) => handleChange("min_ects", e.target.value)}
-                                                className="border px-2 py-1 rounded"
-                                                placeholder="Min"
-                                            />
-                                            </div>
-                                            <div className="flex flex-col">
-                                            <span className="text-xs text-gray-500">Max</span>
-                                            <input
-                                                type="number"
-                                                step="0.5"
-                                                value={routeFormData.max_ects ?? rule.max_ects}
-                                                onChange={(e) => handleChange("max_ects", e.target.value)}
-                                                className="border px-2 py-1 rounded"
-                                                placeholder="Max"
-                                            />
-                                            </div>
-                                            <div className="flex gap-1 justify-end">
-                                            <Button variant="ghost" size="sm" onClick={handleRouteCancel}>Cancel</Button>
-                                            <Button variant="default" size="sm" onClick={() => handleRouteSave(rule)}>Save</Button>
-                                            </div>
-                                        </>
-                                        ) : (
-                                        <>
-                                            <div className="text-gray-900 font-medium">
-                                            <span className="text-xs text-gray-500 mr-1">Min</span>
-                                            {rule.min_ects}
-                                            </div>
-                                            <div className="text-gray-900 font-medium">
-                                            <span className="text-xs text-gray-500 mr-1">Max</span>
-                                            {rule.max_ects}
-                                            </div>
-                                            <Button variant="outline" size="sm" className="justify-self-end" onClick={() => handleRouteEdit(rule)}>Edit</Button>
-                                        </>
-                                        )}
+                            <div className="space-y-2">
+                                {rules.map((rule) => (
+                                    <div key={rule.id} className="border px-3 py-2 rounded-md bg-gray-50">
+                                        <div className="grid grid-cols-[1fr_120px_120px_auto] items-center gap-4 text-sm">
+                                            <div className="font-medium text-gray-900">{rule.module_group.name}</div>
+
+                                            {editingRouteRuleId === rule.id ? (
+                                            <>
+                                                <div className="flex flex-col">
+                                                <span className="text-xs text-gray-500">Min</span>
+                                                <input
+                                                    type="number"
+                                                    step="0.5"
+                                                    value={routeFormData.min_ects ?? rule.min_ects}
+                                                    onChange={(e) => handleChange("min_ects", e.target.value)}
+                                                    className="border px-2 py-1 rounded"
+                                                    placeholder="Min"
+                                                />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                <span className="text-xs text-gray-500">Max</span>
+                                                <input
+                                                    type="number"
+                                                    step="0.5"
+                                                    value={routeFormData.max_ects ?? rule.max_ects}
+                                                    onChange={(e) => handleChange("max_ects", e.target.value)}
+                                                    className="border px-2 py-1 rounded"
+                                                    placeholder="Max"
+                                                />
+                                                </div>
+                                                <div className="flex gap-1 justify-end">
+                                                <Button variant="ghost" size="sm" onClick={handleRouteCancel}>Cancel</Button>
+                                                <Button variant="default" size="sm" onClick={() => handleRouteSave(rule)}>Save</Button>
+                                                </div>
+                                            </>
+                                            ) : (
+                                            <>
+                                                <div className="text-gray-900 font-medium">
+                                                <span className="text-xs text-gray-500 mr-1">Min</span>
+                                                {rule.min_ects}
+                                                </div>
+                                                <div className="text-gray-900 font-medium">
+                                                <span className="text-xs text-gray-500 mr-1">Max</span>
+                                                {rule.max_ects}
+                                                </div>
+                                                <Button variant="outline" size="sm" className="justify-self-end" onClick={() => handleRouteEdit(rule)}>Edit</Button>
+                                            </>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                                {creatingRuleRouteId === parseInt(routeId) && (
+                                    <div className='mt-3 space-y-2 border-t pt-3'>
+                                        <div className="grid grid-cols-[1fr_100px_100px_auto] items-center gap-4 text-sm">
+                                            <select className='border rounded px-2 py-1' value={newRuleForm.module_group_id ?? "" }
+                                                onChange={(e) => setNewRuleForm((prev) => ({
+                                                    ...prev,
+                                                    module_group_id: Number(e.target.value),
+                                                    }))
+                                                }>
+                                                <option value="">Select group</option>
+                                                {moduleGroups
+                                                    .filter(group => !usedGroupIds.has(group.id))
+                                                    .map((group) => (
+                                                        <option key={group.id} value={group.id}>
+                                                            {group.name}
+                                                        </option>
+                                                    ))
+                                                }
+                                            </select>
+
+                                            <input 
+                                                type="number" 
+                                                step='0.5' 
+                                                placeholder="Min" 
+                                                className="border px-2 py-1 rounded"
+                                                value={newRuleForm.min_ects ?? ""}
+                                                onChange={(e) => 
+                                                    setNewRuleForm((prev) => ({
+                                                        ...prev,
+                                                        min_ects: parseFloat(e.target.value)
+                                                    }))
+                                                }
+                                            />
+
+                                            <input 
+                                                type="number" 
+                                                step='0.5' 
+                                                placeholder="Max" 
+                                                className="border px-2 py-1 rounded"
+                                                value={newRuleForm.max_ects ?? ""}
+                                                onChange={(e) => 
+                                                    setNewRuleForm((prev) => ({
+                                                        ...prev,
+                                                        max_ects: parseFloat(e.target.value)
+                                                    }))
+                                                }
+                                            />
+
+                                            <div className="flex space-x-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => setCreatingRuleRouteId(null)}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                                <Button
+                                                    variant="default"
+                                                    size="sm"
+                                                    onClick={() => handleCreateRouteRule(parseInt(routeId))}
+                                                >
+                                                    Save
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -578,6 +708,5 @@ export default function ProgramRuleConfig() {
 
 
         </div>
-
     )
 }

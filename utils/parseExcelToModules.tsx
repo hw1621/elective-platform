@@ -1,3 +1,4 @@
+import { Module, ModuleGroup, Rule } from '@/types/rule-types';
 import * as XLSX from 'xlsx';
 
 export type RawExcelRow = Record<string, any>;
@@ -98,4 +99,50 @@ export function parseBuffer(buffer: Buffer, idMap: Record<string, number>): Pars
   });
 
   return { parsed, errors}
+}
+
+export function exportProgramRulesToExcel(
+  programTitle: string | null,
+  moduleGroups: ModuleGroup[],
+  rules: Rule[],
+  moduleMappingCache: { groups: { module_group_id: number; module_group_name: string; modules: Module[] }[] }
+) {
+  const groupColumns: Record<string, string[]> = {};
+  moduleMappingCache.groups.forEach(group => {
+    groupColumns[group.module_group_name] = group.modules.map(m => m.code);
+  })
+
+  //Create the elective group sheet
+  const electiveGroupSheet: Record<string, any>[] = [];
+  const maxRows = Math.max(...Object.values(groupColumns).map(arr => arr.length));
+  for (let i = 0; i < maxRows; i++) {
+    const row: Record<string, string> = {};
+    for (const groupName in groupColumns) {
+        row[groupName] = groupColumns[groupName][i] || "";
+    }
+    electiveGroupSheet.push(row);
+  }
+
+  //Create the route-rules sheet
+  const routeRulesSheet = rules.map(rule => ({
+    route_name: rule.route.name,
+    group_name: rule.module_group.name,
+    min_ects: rule.min_ects,
+    max_ects: rule.max_ects
+  }))
+
+  // create workbook
+  const workbook = XLSX.utils.book_new();
+
+  const electiveSheet = XLSX.utils.json_to_sheet(electiveGroupSheet);
+  XLSX.utils.book_append_sheet(workbook, electiveSheet, "ElectiveGroups");
+
+  const rulesSheet = XLSX.utils.json_to_sheet(routeRulesSheet);
+  XLSX.utils.book_append_sheet(workbook, rulesSheet, "Rules");
+
+  const now = new Date();
+  const timestamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 12);
+  const programName = programTitle ?? 'program';
+  XLSX.writeFile(workbook, `${programName}_rules_${timestamp}.xlsx`);
+
 }
