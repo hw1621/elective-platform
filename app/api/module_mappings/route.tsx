@@ -19,29 +19,37 @@ export async function GET(request: NextRequest) {
           }
           
 
-        const rules = await prisma.rule.findMany({
+        const moduleGroups = await prisma.module_group.findMany({
             where: {
                 deleted_at: null,
                 program_id: program_id,
             },
             include: {
-                module_group: {
+                mappings: {
+                    where: {
+                        module: {
+                            academic_year_id,
+                            deleted_at: null,
+                        }
+                    },
                     include: {
-                        mappings: {
-                            include: {
-                                module: {
-                                    select: {
-                                        id: true,
-                                        code: true,
-                                        title: true,
-                                    }
-                                }
+                        module: {
+                            select: {
+                                id: true,
+                                code: true,
+                                title: true,
                             }
                         }
                     }
                 }   
             }
         });
+
+        const groups = moduleGroups.map(group => ({
+            module_group_id: group.id,
+            module_group_name: group.name,
+            modules: group.mappings.map(mapping => mapping.module)
+        }));
 
 
         const allModules = await prisma.module.findMany({
@@ -56,21 +64,10 @@ export async function GET(request: NextRequest) {
             }
         });
 
-        const usedModuleIds = new Set<number>();
-        const groups = rules.map(rule => {
-            const modules = rule.module_group.mappings.map(m => {
-                usedModuleIds.add(m.module.id);
-                return m.module;
-            })
-            return {
-                module_group_id: rule.module_group.id,
-                module_group_name: rule.module_group.name,
-                modules,
-            }
-        });
-
+        const usedModuleIds = new Set<number>(
+            groups.flatMap(group => group.modules.map(mod => mod.id))
+        );
         const notIncluded = allModules.filter(m => !usedModuleIds.has(m.id));
-
         return NextResponse.json({
             success: true,  
             data: {
