@@ -431,9 +431,7 @@ export default function ProgramRuleConfig() {
                 </Button>
                 <Button variant='outline' onClick={ async () => {
                     let cache = moduleMappingCache;
-                    if (!cache) {
-                        cache =await refreshMappings();
-                    }
+                    cache = await refreshMappings();
                     if (cache) {
                         exportProgramRulesToExcel(programTitle, moduleGroups, rules, cache)
                     } else {
