@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
                 deleted_at: null
             },
             orderBy: {
-                name: "asc"
+                created_at: "asc"
             }
         })
         return NextResponse.json({
