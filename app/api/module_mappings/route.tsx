@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
                         module: {
                             academic_year_id,
                             deleted_at: null,
-                        }
+                        },
+                        deleted_at: null,
                     },
                     include: {
                         module: {
