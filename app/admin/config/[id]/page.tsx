@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
 import { toast } from "react-hot-toast";
 import { exportProgramRulesToExcel, parseRuleExcel } from "@/utils/parseExcelToModules";
+import { fetchWithCheck } from "@/utils/fetchWithCheck";
 import { GroupModules, Module, ModuleGroup, ModuleMappingCache, ParsedImportRule, Rule } from "@/types/rule-types";
 import React from "react";
 
@@ -56,12 +57,8 @@ export default function ProgramRuleConfig() {
     useEffect(() => {
         const fetchRules = async () => {
             try {
-                const response = await fetch(`/api/rules/?program_id=${programId}`);
-                const result = await response.json();
-                if (!result.success) {
-                    throw new Error(result.message);
-                }
-                setRules(result.data);
+                const data = await fetchWithCheck<Rule[]>(`/api/rules/?program_id=${programId}`);
+                setRules(data);
             } catch (error) {
                 console.error("Error fetching rules: ", error);
             }
@@ -73,12 +70,8 @@ export default function ProgramRuleConfig() {
     useEffect(() => {
         const fetchModuleGroups = async () => {
             try {
-                const res = await fetch(`/api/module_group/?program_id=${programId}`)
-                const result = await res.json();
-                if (!result.success) {
-                    throw new Error(result.message);
-                }
-                setModuleGroups(result.data);
+                const data = await fetchWithCheck<ModuleGroup[]>(`/api/module_group/?program_id=${programId}`)
+                setModuleGroups(data);
             } catch (error) {
                 console.error("Error fetching module groups: ", error);
                 toast.error("Error fetching module groups")
@@ -221,12 +214,8 @@ export default function ProgramRuleConfig() {
 
         if (!moduleMappingCache) {
             try {
-                const response = await fetch(`/api/module_mappings?academic_year_id=${academic_year_id}&program_id=${programId}`);
-                const result = await response.json();
-                if (!result.success) {
-                    throw new Error(result.message);
-                }
-                setStates(result.data, group.id);
+                const response = await fetchWithCheck<ModuleMappingCache>(`/api/module_mappings?academic_year_id=${academic_year_id}&program_id=${programId}`);
+                setStates(response, group.id);
             } catch (error) {
                 console.error("Failed to fetch module mappings:", error);
             }
@@ -279,7 +268,8 @@ export default function ProgramRuleConfig() {
             toast.success("Module group mappings updated successfully")
             setShowManageModulesModal(false);
             setEditingGroupId(null)
-            await refreshMappings();
+            const updated = await refreshMappings();
+            setModuleMappingCache(updated);
         } catch (error) {
             console.error("Failed to save module mappings:", error);
             toast.error("Failed to save module mappings");
@@ -392,28 +382,21 @@ export default function ProgramRuleConfig() {
     //Refetch modules group mappings (used as refreshing mechanism)
     const refreshMappings = async () => {
         try {
-            const refreshMapping = await fetch(`/api/module_mappings?academic_year_id=${academic_year_id}&program_id=${programId}`);
-            const result = await refreshMapping.json();
-            if (!result.success) {
-                throw new Error(result.message);
-            }
-            setModuleMappingCache(result.data);
-            return result.data
+            const refreshMapping = await fetchWithCheck<ModuleMappingCache>(`/api/module_mappings?academic_year_id=${academic_year_id}&program_id=${programId}`);
+            setModuleMappingCache(refreshMapping);
+            return refreshMapping;
         } catch (error) {
             console.error("Failed to refetch mappings:", error);
             toast.error("Failed to refresh module group mappings");
+            return null;
         }
     }
 
     //Refetch module groups (used as refreshing mechanism)
     const refreshModuleGroups = async () => {
         try {
-            const res = await fetch(`/api/module_group/?program_id=${programId}`)
-            const result = await res.json();
-            if (!result.success) {
-                throw new Error(result.message);
-            }
-            setModuleGroups(result.data);
+            const data = await fetchWithCheck<ModuleGroup[]>(`/api/module_group/?program_id=${programId}`);
+            setModuleGroups(data);
         } catch (error) {
             console.error("Error refetching module groups: ", error);
             toast.error("Error refetching module groups")
