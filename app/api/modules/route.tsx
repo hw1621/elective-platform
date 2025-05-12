@@ -65,7 +65,6 @@ export async function GET(request: NextRequest) {
             // module: mapping.module_instance.module 
           }))
         })
-      console.log(flattenedModules)
       return NextResponse.json(flattenedModules)
     } catch (error) {
       console.error((error as Error).message);
