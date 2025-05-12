@@ -74,10 +74,10 @@ export default function ModuleTable() {
     useEffect(() => {
         const fetchModule = async () => {
             const response = await fetch(`/api/modules/all?academic_year_id=${academic_year_id}&page=${page}&page_size=${pageSize}`);
-            if (!response.ok) {
-                throw new Error("Failed to fetch modules");
-            }
             const data = await response.json();
+            if (!data.success) {
+                alert(data.message);
+            }
             setModules(data.data);
             setTotalCount(data.totalCount);
             setPage(data.page);
@@ -101,7 +101,7 @@ export default function ModuleTable() {
         }
     }, [editingCell]);
 
-    const yearIdMap = async () => {
+    const yearIdMap = () => {
         const map: Record<string, number> = {};
         academicYears.forEach((year: { id: number; name: string }) => {
             map[year.name] = year.id;
@@ -193,7 +193,7 @@ export default function ModuleTable() {
         const data = await response.json();
         if (!data.success) {
             setLoading(false);
-            throw new Error(`Import failed, errorMsg: ${data.message}`);
+            alert(`Import failed, errorMsg: ${data.message}`);
         }
 
         alert("Import successful");
@@ -201,15 +201,13 @@ export default function ModuleTable() {
         setLoading(false);
 
         const refethchModule = await fetch(`/api/modules/all?academic_year_id=${academic_year_id}&page=${page}&page_size=${pageSize}`);
-        if (!refethchModule.ok) {
-            throw new Error("Failed to automatically refetch modules after import");
-        }
         const moduleData = await refethchModule.json();
+        if (!moduleData.success) {
+            alert(moduleData.message);
+        }
         setModules(moduleData.data);
         setTotalCount(moduleData.totalCount);
         setPage(moduleData.page);
-
-        
     }
 
     return (
