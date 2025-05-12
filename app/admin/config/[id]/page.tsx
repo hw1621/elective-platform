@@ -38,6 +38,7 @@ export default function ProgramRuleConfig() {
     const [importDialogOpen, setImportDialogOpen] = useState(false);
     const [importedRules, setImportedRules] = useState<ParsedImportRule | null>(null);
     const fileInput = useRef<HTMLInputElement>(null);
+    const [saving, setSaving] = useState(false);
     
 
     const [showManageModulesModal, setShowManageModulesModal] = useState(false);
@@ -80,7 +81,7 @@ export default function ProgramRuleConfig() {
                 setModuleGroups(result.data);
             } catch (error) {
                 console.error("Error fetching module groups: ", error);
-                alert("Error fetching module groups")
+                toast.error("Error fetching module groups")
             }
         };
         fetchModuleGroups();
@@ -143,13 +144,13 @@ export default function ProgramRuleConfig() {
         setEditingGroupId(null);
         } catch (error) {
             console.error("Error saving module group:", error);
-            alert("Failed to save the module group. Please try again.");
+            toast.error("Failed to save the module group. Please try again.");
         }
     }
 
     const handleCreateGroup = async () => {
         if (!newGroupName.trim()) {
-            alert("Group name can't be empty")
+            toast.error("Group name can't be empty")
             return;
         }
 
@@ -175,7 +176,7 @@ export default function ProgramRuleConfig() {
             setCreatingNewGroup(false);
         } catch (error) {
             console.error("Error creating module group:", error);
-            alert("Failed to create module group")
+            toast.error("Failed to create module group")
         }
     }
 
@@ -201,7 +202,7 @@ export default function ProgramRuleConfig() {
             setRules((prev) => prev.filter(rule => rule.module_group_id !== group.id));
         } catch (error) {
             console.error("Error deleting module group:", error);
-            alert("Failed to delete the module group. Please try again.");
+            toast.error("Failed to delete the module group. Please try again.");
         }
     }
 
@@ -244,7 +245,7 @@ export default function ProgramRuleConfig() {
         }
     }
 
-    const handleSaveModules = async () => {
+    const handleSaveModuleMappings = async () => {
         if (!editingGroupId) {
             return
         }
@@ -255,7 +256,7 @@ export default function ProgramRuleConfig() {
         const removed = [...initialIncludedModules].filter(id => !currentIdSet.has(id));
 
         if (added.length === 0 && removed.length === 0) {
-            alert("No changes to save")
+            toast.error("No changes to save")
             return
         }
 
@@ -275,13 +276,13 @@ export default function ProgramRuleConfig() {
             if (!result.success) {
                 throw new Error(result.message);
             }
-            alert("Module Group updated successfully")
+            toast.success("Module group mappings updated successfully")
             setShowManageModulesModal(false);
             setEditingGroupId(null)
             await refreshMappings();
         } catch (error) {
-            console.error("Failed to save modules:", error);
-            alert("Failed to save modules");
+            console.error("Failed to save module mappings:", error);
+            toast.error("Failed to save module mappings");
         }
     }
 
@@ -324,7 +325,7 @@ export default function ProgramRuleConfig() {
             setEditingRuleId(null)
         } catch (error) {
             console.error("Failed to save route rules:", error)
-            alert("Failed to save changes")
+            toast.error("Failed to save route rules")
         }
     }
     
@@ -333,7 +334,7 @@ export default function ProgramRuleConfig() {
             newRuleForm.min_ects === undefined || 
             newRuleForm.max_ects === undefined
         ) {
-            alert("Please complete all fields")
+            toast.error("Please complete all fields")
             return;
         }
 
@@ -369,7 +370,7 @@ export default function ProgramRuleConfig() {
             ])
         } catch (error) {
             console.error("Failed to create rule:", error);
-            alert("Failed to create rule, please try again.");
+            toast.error("Failed to create rule, please try again.");
         }
     }
 
@@ -384,7 +385,7 @@ export default function ProgramRuleConfig() {
             setRules(result.data);
         } catch (error) {
             console.error("Failed to refetch route rules:", error);
-            alert("Failed to refresh route rules after inserting new rule");
+            toast.error("Failed to refresh route rules after inserting new rule");
         }
     }
 
@@ -400,6 +401,7 @@ export default function ProgramRuleConfig() {
             return result.data
         } catch (error) {
             console.error("Failed to refetch mappings:", error);
+            toast.error("Failed to refresh module group mappings");
         }
     }
 
@@ -414,14 +416,14 @@ export default function ProgramRuleConfig() {
             setModuleGroups(result.data);
         } catch (error) {
             console.error("Error refetching module groups: ", error);
-            alert("Error refetching module groups")
+            toast.error("Error refetching module groups")
         }
     }
 
     const handleImportRule = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !file.name.endsWith('.xlsx')) {
-            alert("Please select a valid .xlsx file");
+            toast.error("Please select a valid .xlsx file");
             return;
         }
     
@@ -429,7 +431,7 @@ export default function ProgramRuleConfig() {
             const res = await fetch(`/api/modules/all?academic_year_id=${academic_year_id}&mode=code`);
             const json = await res.json();
             if (!json.success) {
-                alert("Failed to fetch valid module codes");
+                toast.error("Failed to fetch valid module codes");
                 return;
             }
     
@@ -439,7 +441,7 @@ export default function ProgramRuleConfig() {
             setImportDialogOpen(true);
         } catch (error) {
             console.error("Failed to parse rule file:", error);
-            alert("Failed to parse Excel file. Make sure it's correctly formatted.");
+            toast.error("Failed to parse Excel file. Make sure it's correctly formatted.");
         } finally {
             e.target.value = "";
         }
@@ -448,9 +450,12 @@ export default function ProgramRuleConfig() {
     const handleRuleFinalSave = async () => {
         if (!importedRules) return;
         if (importedRules.errors?.length > 0) {
-            alert("There are errors in the imported file. Please resolve them before saving.");
+            toast.error("There are errors in the imported file. Please resolve them before saving.");
             return;
         }
+
+        setSaving(true);
+
         try {
             const res = await fetch('/api/rules/import', {
                 method: 'POST',
@@ -465,7 +470,7 @@ export default function ProgramRuleConfig() {
             if (!response.success) {
                 throw new Error(response.message);
             }
-            alert("Imported rules saved successfully");
+            toast.success("Imported rules saved successfully");
             setImportDialogOpen(false);
             setImportedRules(null);
             await refreshMappings();
@@ -473,7 +478,9 @@ export default function ProgramRuleConfig() {
             await refreshModuleGroups();
         } catch (error) {
             console.error("Failed to save imported rules:", error);
-            alert("Failed to save imported rules");
+            toast.error("Failed to save imported rules");
+        } finally {
+            setSaving(false);
         }
     }
     
@@ -519,7 +526,7 @@ export default function ProgramRuleConfig() {
                     if (cache) {
                         exportProgramRulesToExcel(programTitle, rules, cache)
                     } else {
-                        alert("Failed to load module mappings. Please try again.");
+                        toast.error("Failed to load module mappings. Please try again.");
                     }
                 }}>
                     Export Rule
@@ -636,7 +643,7 @@ export default function ProgramRuleConfig() {
 
                         <div className="flex justify-end mt-6 space-x-2">
                             <Button variant="ghost" onClick={() => {setShowManageModulesModal(false); setEditingGroupId(null)}}>Cancel</Button>
-                            <Button variant="default" onClick={() => handleSaveModules()}>Save</Button>
+                            <Button variant="default" onClick={() => handleSaveModuleMappings()}>Save</Button>
                         </div>
                     </div> 
                 </div>
@@ -864,7 +871,9 @@ export default function ProgramRuleConfig() {
 
                         <div className="flex justify-end gap-2 pt-2">
                             <Button variant="ghost" onClick={() => setImportDialogOpen(false)}>Cancel</Button>
-                            <Button variant="default" onClick={() => handleRuleFinalSave()}>Confirm Import</Button>
+                            <Button variant="default" onClick={() => handleRuleFinalSave()} disabled={saving}>
+                                {saving ? "Saving..." : "Confirm Import"}
+                            </Button>
                         </div>
                         </>
                     )}
