@@ -34,3 +34,14 @@ export type ModuleMappingCache = {
     groups: GroupModules[];
     notIncluded: Module[];
 }
+
+export type ParsedImportRule = {
+    moduleGroups: Record<string, string[]>;
+    rules: {
+        route_name: string,
+        group_name: string,
+        min_ects: number,
+        max_ects: number,
+    }[];
+    errors: string[];
+}

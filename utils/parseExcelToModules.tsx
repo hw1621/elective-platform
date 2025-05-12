@@ -1,4 +1,6 @@
-import { Module, ModuleGroup, Rule } from '@/types/rule-types';
+import { Module, Rule, ParsedImportRule } from '@/types/rule-types';
+import { group } from 'console';
+import { rule } from 'postcss';
 import * as XLSX from 'xlsx';
 
 export type RawExcelRow = Record<string, any>;
@@ -98,12 +100,11 @@ export function parseBuffer(buffer: Buffer, idMap: Record<string, number>): Pars
       parsed.push(module);
   });
 
-  return { parsed, errors}
+  return { parsed, errors }
 }
 
 export function exportProgramRulesToExcel(
   programTitle: string | null,
-  moduleGroups: ModuleGroup[],
   rules: Rule[],
   moduleMappingCache: { groups: { module_group_id: number; module_group_name: string; modules: Module[] }[] }
 ) {
@@ -145,4 +146,69 @@ export function exportProgramRulesToExcel(
   const programName = programTitle ?? 'program';
   XLSX.writeFile(workbook, `${programName}_rules_${timestamp}.xlsx`);
 
+}
+
+export function parseRuleExcel(buffer: Buffer): ParsedImportRule {
+  const workbook = XLSX.read(buffer, { type: "buffer" });
+
+  const groupSheet = workbook.Sheets["ElectiveGroups"];
+  const rulesSheet = workbook.Sheets["Rules"];
+  const errors: string[] = [];
+
+  if (!groupSheet || !rulesSheet) {
+    errors.push("File is missing required sheets: 'ElectiveGroups' or 'Rules'");
+    return { moduleGroups: {}, rules: [], errors };
+  }
+
+  const groupRows = XLSX.utils.sheet_to_json<Record<string, string>>(groupSheet);
+  const moduleGroups: Record<string, string[]> = {};
+
+  if (groupRows.length > 0) {
+    const groupNames = Object.keys(groupRows[0]);
+    for (const groupName of groupNames) {
+      moduleGroups[groupName] = groupRows
+        .map((row) => row[groupName])
+        .filter((val): val is string => typeof val === "string" && val.trim().length > 0);
+    }
+  }
+
+  const rawRules = XLSX.utils.sheet_to_json<any>(rulesSheet);
+  const rules: ParsedImportRule["rules"] = [];
+
+  rawRules.forEach((row, index) => {
+    const rowNum = index + 2;
+    const { route_name, group_name, min_ects, max_ects } = row;
+    const rawMin = Number(row.min_ects);
+    const rawMax = Number(row.max_ects);
+
+
+    if (
+      typeof route_name !== "string" ||
+      typeof group_name !== "string" ||
+      isNaN(rawMin) ||
+      isNaN(rawMax)
+    ) {
+      errors.push(`Row ${rowNum}: Missing or invalid fields 
+        (route_name: ${route_name}, group_name: ${group_name}, min_ects: ${min_ects}, max_ects: ${max_ects})`);
+      return;
+    }
+
+    if (min_ects > max_ects) {
+      errors.push(`Row ${rowNum}: min_ects cannot be greater than max_ects`);
+      return;
+    }
+
+    rules.push({
+      route_name: route_name.trim(),
+      group_name: group_name.trim(),
+      min_ects: rawMin,
+      max_ects: rawMax,
+    });
+  });
+
+  return {
+    moduleGroups,
+    rules,
+    errors,
+  };
 }

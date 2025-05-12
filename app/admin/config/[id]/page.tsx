@@ -2,11 +2,13 @@
 
 import { useParams, useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button";
-import { exportProgramRulesToExcel } from "@/utils/parseExcelToModules";
-import { GroupModules, Module, ModuleGroup, ModuleMappingCache, Rule } from "@/types/rule-types";
+import { X } from 'lucide-react';
+import { exportProgramRulesToExcel, parseRuleExcel } from "@/utils/parseExcelToModules";
+import { GroupModules, Module, ModuleGroup, ModuleMappingCache, ParsedImportRule, Rule } from "@/types/rule-types";
+import React from "react";
 
 
 export default function ProgramRuleConfig() {
@@ -30,6 +32,12 @@ export default function ProgramRuleConfig() {
     const [creatingRuleRouteId, setCreatingRuleRouteId] = useState<number | null>(null)
     //Data for new created rule
     const [newRuleForm, setNewRuleForm] = useState<Partial<Rule>>({});
+
+    //Dialog for imported rules
+    const [importDialogOpen, setImportDialogOpen] = useState(false);
+    const [importedRules, setImportedRules] = useState<ParsedImportRule | null>(null);
+    const fileInput = useRef<HTMLInputElement>(null);
+    
 
     const [showManageModulesModal, setShowManageModulesModal] = useState(false);
     const [moduleMappingCache, setModuleMappingCache] = useState<ModuleMappingCache | null>(null);
@@ -393,6 +401,26 @@ export default function ProgramRuleConfig() {
     //         alert("Failed to refresh route rules after inserting new rule");
     //     }
     // }
+
+    const handleImportRule = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file || !file.name.endsWith('.xlsx')) {
+            alert("Please select a valid .xlsx file")
+            return;
+        }
+
+        try {
+            const buffer = await file.arrayBuffer();
+            const result = parseRuleExcel(Buffer.from(buffer))
+            setImportedRules(result)
+            setImportDialogOpen(true);
+        } catch (error) {
+            console.error("Failed to parse rule file: ", error);
+            alert("Failed to parse Excel file. Make sure it's correctly formatted.");
+        } finally {
+            e.target.value = "";
+        }
+    }
     
     
     const rulesByRoute = rules.reduce((acc, rule) => {
@@ -426,14 +454,15 @@ export default function ProgramRuleConfig() {
                 <Button variant='outline' onClick={() => setCreatingNewGroup(true)}>
                     Add Group
                 </Button>
-                <Button variant='outline'>
+                <input type='file' accept='.xlsx' ref={fileInput} onChange={handleImportRule} className="hidden" />
+                <Button variant='outline' onClick={() => fileInput.current?.click()}>
                     Import Rule
                 </Button>
                 <Button variant='outline' onClick={ async () => {
                     let cache = moduleMappingCache;
                     cache = await refreshMappings();
                     if (cache) {
-                        exportProgramRulesToExcel(programTitle, moduleGroups, rules, cache)
+                        exportProgramRulesToExcel(programTitle, rules, cache)
                     } else {
                         alert("Failed to load module mappings. Please try again.");
                     }
@@ -535,7 +564,7 @@ export default function ProgramRuleConfig() {
 
                             {/* Not Included Modules */}
                             <div>
-                                <h3 className='font-semibold mb-2'>Not Included Modules</h3>
+                                <h3 className='font-semibold mb-2'>Excluded Modules</h3>
                                  <div className="border rounded-md p-4 min-h-[200px] max-h-[300px] overflow-y-auto bg-gray-50">
                                  {notIncludedModules.map(mod => (
                                     <div
@@ -704,7 +733,107 @@ export default function ProgramRuleConfig() {
                 </div>
             </div>
 
+            {importDialogOpen && importedRules && (
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+                <div className="relative bg-white rounded-lg p-6 max-w-3xl w-full space-y-4 max-h-[80vh] overflow-y-auto">
+                    <div className="flex items-center justify-between">
+                        <button
+                            className="absolute top-4 right-4 text-gray-500 hover:text-black"
+                            onClick={() => setImportDialogOpen(false)}
+                            aria-label="Close"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
 
+                    {importedRules.errors.length > 0 ? (
+                        <div className="text-red-600 space-y-1">
+                            <p className="font-semibold">⚠️ Errors:</p>
+                            <ul className="list-disc pl-5 text-sm">
+                                {importedRules.errors.map((e, i) => <li key={i}>{e}</li>)}
+                            </ul>
+                        </div>
+                    ) : (
+                        <>
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-1">Module Groups</h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                {Object.entries(importedRules.moduleGroups).map(([groupName, codes]) => (
+                                    <div key={groupName} className="border rounded-md p-3 bg-gray-50">
+                                    <h4 className="font-semibold text-gray-800 mb-1">{groupName}</h4>
+                                    {codes.length > 0 ? (
+                                        <ul className="list-disc pl-5 text-sm text-gray-700">
+                                        {codes.map(code => <li key={code}>{code}</li>)}
+                                        </ul>
+                                    ) : (
+                                        <p className="text-sm italic text-gray-400">No modules in this group</p>
+                                    )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-1">Rules</h3>
+                            <div className="space-y-4 mt-6">
+                                {Object.entries(
+                                    importedRules.rules.reduce((acc, rule) => {
+                                        if (!acc[rule.route_name]) acc[rule.route_name] = [];
+                                        acc[rule.route_name].push(rule);
+                                        return acc;
+                                    }, {} as Record<string, typeof importedRules.rules>)
+                                ).map(([routeName, routeRules]) => (
+                                    <div key={routeName} className="border border-gray-200 rounded-md p-4 bg-gray-50">
+                                        <h4 className="text-lg font-bold text-gray-900 mb-3 pb-1">{routeName}</h4>
+                                        <ul className="list-disc pl-5 space-y-1.5">
+                                            {routeRules.map((rule, idx) => (
+                                                <li key={idx}>
+                                                    <div className="grid grid-cols-[1fr_140px_120px] gap-x-5 items-center">
+                                                        <span className="font-medium text-gray-900">{rule.group_name}</span>
+                                                        <div className="text-left">
+                                                        <span className="text-xs text-gray-500 mr-1">Min</span>
+                                                        <span className="font-semibold text-gray-900">{rule.min_ects}</span>
+                                                        </div>
+                                                        <div className="text-left">
+                                                        <span className="text-xs text-gray-500 mr-1">Max</span>
+                                                        <span className="font-semibold text-gray-900">{rule.max_ects}</span>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                            <Button variant="ghost" onClick={() => setImportDialogOpen(false)}>Cancel</Button>
+                            <Button variant="default" onClick={async () => {
+                            const res = await fetch('/api/rules/import', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                program_id: programId,
+                                academic_year_id,
+                                data: importedRules,
+                                }),
+                            });
+                            const result = await res.json();
+                            if (result.success) {
+                                alert('Import successful');
+                                setImportDialogOpen(false);
+                                window.location.reload(); // or refetch rules
+                            } else {
+                                alert('Import failed: ' + result.message);
+                            }
+                            }}>Confirm Import</Button>
+                        </div>
+                        </>
+                    )}
+                </div>
+            </div>
+            )}
         </div>
     )
 }
