@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button";
 import { X } from 'lucide-react';
+import { toast } from "react-hot-toast";
 import { exportProgramRulesToExcel, parseRuleExcel } from "@/utils/parseExcelToModules";
 import { GroupModules, Module, ModuleGroup, ModuleMappingCache, ParsedImportRule, Rule } from "@/types/rule-types";
 import React from "react";
@@ -243,21 +244,6 @@ export default function ProgramRuleConfig() {
         }
     }
 
-    //Refetch modules group mappings (used as refreshing mechanism)
-    const refreshMappings = async () => {
-        try {
-            const refreshMapping = await fetch(`/api/module_mappings?academic_year_id=${academic_year_id}&program_id=${programId}`);
-            const result = await refreshMapping.json();
-            if (!result.success) {
-                throw new Error(result.message);
-            }
-            setModuleMappingCache(result.data);
-            return result.data
-        } catch (error) {
-            console.error("Failed to refetch mappings:", error);
-        }
-    }
-
     const handleSaveModules = async () => {
         if (!editingGroupId) {
             return
@@ -388,37 +374,106 @@ export default function ProgramRuleConfig() {
     }
 
     //Refetch route rules (used as refreshing mechanism)
-    // const refreshRouteRules = async () => {
-    //     try {
-    //         const refreshed = await fetch(`/api/rules/?program_id=${programId}`);
-    //         const result = await refreshed.json();
-    //         if (!result.success) {
-    //             throw new Error(result.message);
-    //         }
-    //         setRules(result.data);
-    //     } catch (error) {
-    //         console.error("Failed to refetch route rules:", error);
-    //         alert("Failed to refresh route rules after inserting new rule");
-    //     }
-    // }
+    const refreshRouteRules = async () => {
+        try {
+            const refreshed = await fetch(`/api/rules/?program_id=${programId}`);
+            const result = await refreshed.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            setRules(result.data);
+        } catch (error) {
+            console.error("Failed to refetch route rules:", error);
+            alert("Failed to refresh route rules after inserting new rule");
+        }
+    }
+
+    //Refetch modules group mappings (used as refreshing mechanism)
+    const refreshMappings = async () => {
+        try {
+            const refreshMapping = await fetch(`/api/module_mappings?academic_year_id=${academic_year_id}&program_id=${programId}`);
+            const result = await refreshMapping.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            setModuleMappingCache(result.data);
+            return result.data
+        } catch (error) {
+            console.error("Failed to refetch mappings:", error);
+        }
+    }
+
+    //Refetch module groups (used as refreshing mechanism)
+    const refreshModuleGroups = async () => {
+        try {
+            const res = await fetch(`/api/module_group/?program_id=${programId}`)
+            const result = await res.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            setModuleGroups(result.data);
+        } catch (error) {
+            console.error("Error refetching module groups: ", error);
+            alert("Error refetching module groups")
+        }
+    }
 
     const handleImportRule = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
+        const file = e.target.files?.[0];
         if (!file || !file.name.endsWith('.xlsx')) {
-            alert("Please select a valid .xlsx file")
+            alert("Please select a valid .xlsx file");
             return;
         }
-
+    
         try {
+            const res = await fetch(`/api/modules/all?academic_year_id=${academic_year_id}&mode=code`);
+            const json = await res.json();
+            if (!json.success) {
+                alert("Failed to fetch valid module codes");
+                return;
+            }
+    
             const buffer = await file.arrayBuffer();
-            const result = parseRuleExcel(Buffer.from(buffer))
-            setImportedRules(result)
+            const result = parseRuleExcel(Buffer.from(buffer), json.data);
+            setImportedRules(result);
             setImportDialogOpen(true);
         } catch (error) {
-            console.error("Failed to parse rule file: ", error);
+            console.error("Failed to parse rule file:", error);
             alert("Failed to parse Excel file. Make sure it's correctly formatted.");
         } finally {
             e.target.value = "";
+        }
+    };    
+
+    const handleRuleFinalSave = async () => {
+        if (!importedRules) return;
+        if (importedRules.errors?.length > 0) {
+            alert("There are errors in the imported file. Please resolve them before saving.");
+            return;
+        }
+        try {
+            const res = await fetch('/api/rules/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  program_id: programId,
+                  academic_year_id,
+                  data: importedRules,
+                }),
+            });
+            const response = await res.json();
+            if (!response.success) {
+                throw new Error(response.message);
+            }
+            alert("Imported rules saved successfully");
+            setImportDialogOpen(false);
+            setImportedRules(null);
+            await refreshMappings();
+            await refreshRouteRules();
+            await refreshModuleGroups();
+        } catch (error) {
+            console.error("Failed to save imported rules:", error);
+            alert("Failed to save imported rules");
         }
     }
     
@@ -809,25 +864,7 @@ export default function ProgramRuleConfig() {
 
                         <div className="flex justify-end gap-2 pt-2">
                             <Button variant="ghost" onClick={() => setImportDialogOpen(false)}>Cancel</Button>
-                            <Button variant="default" onClick={async () => {
-                            const res = await fetch('/api/rules/import', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                program_id: programId,
-                                academic_year_id,
-                                data: importedRules,
-                                }),
-                            });
-                            const result = await res.json();
-                            if (result.success) {
-                                alert('Import successful');
-                                setImportDialogOpen(false);
-                                window.location.reload(); // or refetch rules
-                            } else {
-                                alert('Import failed: ' + result.message);
-                            }
-                            }}>Confirm Import</Button>
+                            <Button variant="default" onClick={() => handleRuleFinalSave()}>Confirm Import</Button>
                         </div>
                         </>
                     )}

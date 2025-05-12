@@ -77,6 +77,7 @@ export default function ModuleTable() {
             const data = await response.json();
             if (!data.success) {
                 alert(data.message);
+                return;
             }
             setModules(data.data);
             setTotalCount(data.totalCount);
@@ -194,6 +195,7 @@ export default function ModuleTable() {
         if (!data.success) {
             setLoading(false);
             alert(`Import failed, errorMsg: ${data.message}`);
+            return;
         }
 
         alert("Import successful");
@@ -204,6 +206,7 @@ export default function ModuleTable() {
         const moduleData = await refethchModule.json();
         if (!moduleData.success) {
             alert(moduleData.message);
+            return;
         }
         setModules(moduleData.data);
         setTotalCount(moduleData.totalCount);
