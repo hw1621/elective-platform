@@ -148,7 +148,7 @@ export function exportProgramRulesToExcel(
 
 }
 
-export function parseRuleExcel(buffer: Buffer): ParsedImportRule {
+export function parseRuleExcel(buffer: Buffer, validModuleCodes: string[]): ParsedImportRule {
   const workbook = XLSX.read(buffer, { type: "buffer" });
 
   const groupSheet = workbook.Sheets["ElectiveGroups"];
@@ -162,13 +162,21 @@ export function parseRuleExcel(buffer: Buffer): ParsedImportRule {
 
   const groupRows = XLSX.utils.sheet_to_json<Record<string, string>>(groupSheet);
   const moduleGroups: Record<string, string[]> = {};
+  const validCodeSet = new Set(validModuleCodes);
 
   if (groupRows.length > 0) {
     const groupNames = Object.keys(groupRows[0]);
     for (const groupName of groupNames) {
-      moduleGroups[groupName] = groupRows
+      const containedCodes = groupRows
         .map((row) => row[groupName])
-        .filter((val): val is string => typeof val === "string" && val.trim().length > 0);
+        .filter((val): val is string => typeof val === "string" && val.trim().length > 0)
+        .map((code) => code.trim());
+      
+      moduleGroups[groupName] = containedCodes;
+      const invalidCodes = containedCodes.filter(code => !validCodeSet.has(code));
+      if (invalidCodes.length > 0) {
+        errors.push(`Invalid module codes found in group "${groupName}": ${invalidCodes.join(", ")}`);
+      }
     }
   }
 
@@ -195,6 +203,11 @@ export function parseRuleExcel(buffer: Buffer): ParsedImportRule {
 
     if (min_ects > max_ects) {
       errors.push(`Row ${rowNum}: min_ects cannot be greater than max_ects`);
+      return;
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(moduleGroups, group_name)) {
+      errors.push(`Row ${rowNum} in Rules sheet: Module group "${group_name}" not found in the module groups sheet`);
       return;
     }
 
