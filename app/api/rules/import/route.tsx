@@ -130,6 +130,10 @@ export async function POST(req: NextRequest) {
                 }
             }
         })
+        return NextResponse.json({
+            success: true,
+            message: "Rules imported successfully",
+        })
 
     } catch (error) {
         console.error("[POST /api/rules/import] Failed to import rules: ", error);
