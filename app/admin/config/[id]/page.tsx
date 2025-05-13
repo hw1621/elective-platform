@@ -11,6 +11,7 @@ import { exportProgramRulesToExcel, parseRuleExcel } from "@/utils/parseExcelToM
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
 import { GroupModules, Module, ModuleGroup, ModuleMappingCache, ParsedImportRule, Rule } from "@/types/rule-types";
 import React from "react";
+import { Switch } from "@/components/ui/switch";
 
 
 export default function ProgramRuleConfig() {
@@ -48,6 +49,9 @@ export default function ProgramRuleConfig() {
     const [includedModules, setIncludedModules] = useState<Module[]>([]);
     const [notIncludedModules, setNotIncludedModules] = useState<Module[]>([]);
 
+    //Settings
+    const [settings, setSettings] = useState<Record<string, { id: number; value: string }>>({});
+
     const params = useParams();
     const programId = Number(params.id);
 
@@ -79,6 +83,26 @@ export default function ProgramRuleConfig() {
         };
         fetchModuleGroups();
     }, [programId])
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const data = await fetchWithCheck<Array<{ id: number; key: string; value: string }>>(`/api/settings/?program_id=${programId}`);
+                const settings = Object.fromEntries(
+                    data.map((setting) => [
+                        setting.key,
+                        { id: setting.id, value: setting.value }
+                    ])
+                );
+
+                setSettings(settings);
+            } catch (error) {
+                console.error("Error fetching program settings: ", error);
+                toast.error("Error fetching program settings")
+            };
+        }
+        fetchSettings();
+    }, [programId]);
 
     //Elective Group Section Operations:
     const handleGroupEdit = (group : ModuleGroup) => {
@@ -466,6 +490,38 @@ export default function ProgramRuleConfig() {
             setSaving(false);
         }
     }
+
+    const updateSetting = async (key: string, value: string) => {  
+        const setting = settings[key];
+        if (!setting) {
+            return;
+        } 
+
+        try {
+            const response = await fetch(`/api/settings`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    setting_id: setting.id,
+                    value,
+                }),
+            });
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            setSettings((prev) => ({
+                ...prev,
+                [key]: { ...prev[key], value },
+            }));
+            toast.success("Setting updated successfully");
+        } catch (error) {
+            console.error("Failed to update setting:", error);
+            toast.error("Failed to update setting");
+        }
+    }
     
     
     const rulesByRoute = rules.reduce((acc, rule) => {
@@ -778,6 +834,29 @@ export default function ProgramRuleConfig() {
                 </div>
             </div>
 
+            <div className="space-y-4">
+                <h1 className="text-3xl font-bold">Settings</h1>
+
+                <div className="w-[600px] rounded-lg border px-4 py-3 bg-white shadow-sm">
+                    <div className="flex items-left gap-x-3">
+                        <Switch
+                            id="enable-sit-in"
+                            checked={settings["enable_sit_in"]?.value === "true"}
+                            onCheckedChange={(checked) =>
+                            updateSetting("enable_sit_in", checked ? "true" : "false")
+                            }
+                        />
+                        <span className="text-base font-medium text-gray-900">
+                            Enable 'sit-in' option
+                        </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                    Allow students to mark a selection as sit-in instead of normal selection.
+                    </p>
+                </div>
+            </div>
+
+            {/* Import Rules from File */}
             {importDialogOpen && importedRules && (
             <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="relative bg-white rounded-lg p-6 max-w-3xl w-full space-y-4 max-h-[80vh] overflow-y-auto">
