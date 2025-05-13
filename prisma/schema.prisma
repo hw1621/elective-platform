@@ -29,6 +29,7 @@ model program {
   rules            rule[]
   routes           route[]
   module_groups    module_group[]
+  settings         setting[]
 }
 
 model academic_year {
@@ -169,6 +170,21 @@ model route {
 
   program    program   @relation(fields:[program_id], references: [id])
   rules      rule[]
+}
+
+model setting {
+  id           Int   @id @default(autoincrement())
+  program_id   Int  
+  key          String  
+  value        String
+
+  created_at   DateTime    @default(now())
+  modified_at  DateTime    @default(now()) @updatedAt
+  deleted_at   DateTime?  
+
+  program      program  @relation(fields: [program_id], references: [id])
+
+  @@unique([program_id, key])
 }
 
 
