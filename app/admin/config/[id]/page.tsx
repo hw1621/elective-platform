@@ -847,7 +847,7 @@ export default function ProgramRuleConfig() {
                             }
                         />
                         <span className="text-base font-medium text-gray-900">
-                            Enable 'sit-in' option
+                            Enable &lsquo;sit-in&rsquo; option
                         </span>
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">
