@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
         { status: 200}
         );
     } catch (error) {
-        console.error("Error fetching rules:", error);
+        console.error("[GET /api/rules] Error fetching rules:", error);
         return NextResponse.json({
             success: false,
             data: null,
@@ -91,7 +91,7 @@ export async function PATCH(request: NextRequest) {
             message: "Rule updated successfully"
         }, { status: 200 })
     } catch (error) {
-        console.error("Error updateing rule: ", error);
+        console.error("[PATCH /api/rules] Error updateing rule: ", error);
         return NextResponse.json({
             success: false, 
             message: (error as Error).message,
@@ -139,6 +139,28 @@ export async function POST(request: NextRequest) {
             message: `Failed to create rule: ${(error as Error).message}`,
           }
         );
+    }
+}
+
+export async function DELETE(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { rule_id } = body;
+
+        if (!rule_id) {
+        return NextResponse.json({ success: false, message: "Missing rule_id" }, { status: 400 });
+        }
+
+        await prisma.rule.update({
+            where: { id: rule_id },
+            data: {
+                deleted_at: new Date(),
+            },
+        });
+        return NextResponse.json({ success: true, message: "Rule deleted successfully" }, { status: 200 });
+    } catch (error) {
+        console.error("[DELETE /api/rules/] Error deleting rule:", error);
+        return NextResponse.json({ success: false, message: "Failed to delete rule" }, { status: 500 });
     }
 }
 

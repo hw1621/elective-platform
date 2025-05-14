@@ -115,6 +115,32 @@ export function RouteSection({
         }
     }
 
+    const handleDeleteRouteRule = async (ruleId: number) => {
+        const confirmed = confirm("Are you sure you want to delete this rule?");
+        if (!confirmed) {
+            return;
+        }
+        try {   
+            const response = await fetch(`/api/rules`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    rule_id: ruleId,
+                }),
+            });
+            const result = await response.json();
+            if (!result.success) {
+                throw new Error(result.message);
+            }
+            setRules((prev) => prev.filter((rule) => rule.id !== ruleId));
+        } catch (error) {
+            console.error("Failed to delete rule:", error);
+            alert("Failed to delete rule");
+        }
+    }
+
     const rulesByRoute = rules.reduce((acc, rule) => {
         if (!acc[rule.route_id]) {
           acc[rule.route_id] = {
@@ -187,15 +213,18 @@ export function RouteSection({
                                         </>
                                         ) : (
                                         <>
-                                            <div className="text-gray-900 font-medium">
+                                        <div className="text-gray-900 font-medium">
                                             <span className="text-xs text-gray-500 mr-1">Min</span>
                                             {rule.min_ects}
-                                            </div>
-                                            <div className="text-gray-900 font-medium">
+                                        </div>
+                                        <div className="text-gray-900 font-medium">
                                             <span className="text-xs text-gray-500 mr-1">Max</span>
                                             {rule.max_ects}
-                                            </div>
-                                            <Button variant="outline" size="sm" className="justify-self-end" onClick={() => handleRouteEdit(rule)}>Edit</Button>
+                                        </div>
+                                        <div className="flex gap-2 justify-end">
+                                            <Button variant="outline" size="sm" onClick={() => handleRouteEdit(rule)}>Edit</Button>
+                                            <Button variant="destructive" size="sm" onClick={() => handleDeleteRouteRule(rule.id)}>Delete</Button>
+                                        </div>
                                         </>
                                         )}
                                     </div>
