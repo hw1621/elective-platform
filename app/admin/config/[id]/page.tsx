@@ -14,6 +14,7 @@ import React from "react";
 import { ElectiveGroupSection } from "./ElectiveGroupSection";
 import { RouteSection } from "./RouteSection";
 import { SettingSection } from "./SettingSection";
+import { ModuleSitInOverview } from "./ModuleSitInOverview";
 
 
 export default function ProgramRuleConfig() {
@@ -33,7 +34,8 @@ export default function ProgramRuleConfig() {
     const [importedRules, setImportedRules] = useState<ParsedImportRule | null>(null);
     const fileInput = useRef<HTMLInputElement>(null);
     const [saving, setSaving] = useState(false);
-    
+
+    const [view, setView] = useState<"main" | "modules">("main");
 
     //TODO: later modify the academic_year_id to be dynamic
     const academic_year_id = 1;
@@ -224,28 +226,32 @@ export default function ProgramRuleConfig() {
                 </Button>
             </div>
 
-            <ElectiveGroupSection 
-                moduleGroups={moduleGroups}
-                setModuleGroups={setModuleGroups}
-                setRules={setRules}
-                programId={programId}
-                moduleMappingCache={moduleMappingCache}
-                setModuleMappingCache={setModuleMappingCache}
-                academic_year_id={academic_year_id}
-            />
+            {/* Tabs for switching views */}
+            <div className="border-b border-gray-300">
+                <div className="flex space-x-6">
+                    <button
+                    onClick={() => setView("main")}
+                    className={`py-2 text-base font-medium transition-all border-b-2 ${
+                        view === "main"
+                        ? "border-black text-black"
+                        : "border-transparent text-gray-500 hover:text-black"
+                    }`}
+                    >
+                    Rule Configuration
+                    </button>
+                    <button
+                    onClick={() => setView("modules")}
+                    className={`py-2 text-base font-medium transition-all border-b-2 ${
+                        view === "modules"
+                        ? "border-black text-black"
+                        : "border-transparent text-gray-500 hover:text-black"
+                    }`}
+                    >
+                    Module Sit-In Overview
+                    </button>
+                </div>
+            </div>
 
-            <RouteSection
-                programId={programId}
-                academic_year_id={academic_year_id}
-                moduleGroups={moduleGroups}
-                rules={rules}
-                setRules={setRules}
-            />
-
-            <SettingSection
-                settings={settings}
-                setSettings={setSettings}
-            />
 
             {/* Import Rules from File */}
             {importDialogOpen && importedRules && (
@@ -333,6 +339,44 @@ export default function ProgramRuleConfig() {
                 </div>
             </div>
             )}
+            
+            <div className="bg-white rounded-xl shadow-md p-6">
+                {view === "main" ? (
+                    <div className="space-y-14">
+                        <ElectiveGroupSection 
+                        moduleGroups={moduleGroups}
+                        setModuleGroups={setModuleGroups}
+                        setRules={setRules}
+                        programId={programId}
+                        moduleMappingCache={moduleMappingCache}
+                        setModuleMappingCache={setModuleMappingCache}
+                        academic_year_id={academic_year_id}
+                        />
+        
+                        <RouteSection
+                        programId={programId}
+                        academic_year_id={academic_year_id}
+                        moduleGroups={moduleGroups}
+                        rules={rules}
+                        setRules={setRules}
+                        />
+        
+                        <SettingSection
+                        settings={settings}
+                        setSettings={setSettings}
+                        />
+                    </div>
+                ) : (
+                    <ModuleSitInOverview
+                        programId={programId}
+                        academic_year_id={academic_year_id}
+                        moduleMappingCache={moduleMappingCache}
+                        setModuleMappingCache={setModuleMappingCache}
+                        refreshMappings={refreshMappings}
+                        setView={setView}
+                    />
+                )}
+            </div>
         </div>
     )
 }
