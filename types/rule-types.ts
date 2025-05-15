@@ -22,6 +22,7 @@ export type Module = {
     id: number;
     code: string;
     title: string;
+    allow_sit_in: boolean;
 }
 
 export type GroupModules = {

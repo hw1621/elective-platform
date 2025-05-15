@@ -226,33 +226,6 @@ export default function ProgramRuleConfig() {
                 </Button>
             </div>
 
-            {/* Tabs for switching views */}
-            <div className="border-b border-gray-300">
-                <div className="flex space-x-6">
-                    <button
-                    onClick={() => setView("main")}
-                    className={`py-2 text-base font-medium transition-all border-b-2 ${
-                        view === "main"
-                        ? "border-black text-black"
-                        : "border-transparent text-gray-500 hover:text-black"
-                    }`}
-                    >
-                    Rule Configuration
-                    </button>
-                    <button
-                    onClick={() => setView("modules")}
-                    className={`py-2 text-base font-medium transition-all border-b-2 ${
-                        view === "modules"
-                        ? "border-black text-black"
-                        : "border-transparent text-gray-500 hover:text-black"
-                    }`}
-                    >
-                    Module Sit-In Overview
-                    </button>
-                </div>
-            </div>
-
-
             {/* Import Rules from File */}
             {importDialogOpen && importedRules && (
             <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
@@ -339,6 +312,32 @@ export default function ProgramRuleConfig() {
                 </div>
             </div>
             )}
+
+            {/* Tabs for switching views */}
+            <div className="border-b border-gray-400">
+                <div className="flex space-x-6">
+                    <button
+                    onClick={() => setView("main")}
+                    className={`py-2 text-base font-medium transition-all border-b-2 ${
+                        view === "main"
+                        ? "border-black text-black"
+                        : "border-transparent text-gray-500 hover:text-black"
+                    }`}
+                    >
+                        Rule Configuration
+                    </button>
+                    <button
+                    onClick={() => setView("modules")}
+                    className={`py-2 text-base font-medium transition-all border-b-2 ${
+                        view === "modules"
+                        ? "border-black text-black"
+                        : "border-transparent text-gray-500 hover:text-black"
+                    }`}
+                    >
+                        Module Sit-In Overview
+                    </button>
+                </div>
+            </div>
             
             <div className="bg-white rounded-xl shadow-md p-6">
                 {view === "main" ? (
@@ -368,12 +367,10 @@ export default function ProgramRuleConfig() {
                     </div>
                 ) : (
                     <ModuleSitInOverview
-                        programId={programId}
-                        academic_year_id={academic_year_id}
                         moduleMappingCache={moduleMappingCache}
                         setModuleMappingCache={setModuleMappingCache}
                         refreshMappings={refreshMappings}
-                        setView={setView}
+                        settings={settings}
                     />
                 )}
             </div>

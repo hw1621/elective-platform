@@ -49,8 +49,12 @@ export async function GET(request: NextRequest) {
         const groups = moduleGroups.map(group => ({
             module_group_id: group.id,
             module_group_name: group.name,
-            modules: group.mappings.map(mapping => mapping.module)
-        }));
+            modules: group.mappings.map(mapping => ({
+                ...mapping.module,
+                allow_sit_in: mapping.allow_sit_in ?? false
+              }))
+        }))
+
 
 
         const allModules = await prisma.module.findMany({
@@ -137,6 +141,40 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             success: false,
             message: `Fail to update module group mappings, errMsg: ${(error as Error).message}`
+        })
+    }
+}
+
+//Update allow sit in
+export async function PATCH(req: NextRequest) {
+    try {
+        const body = await req.json();
+        const { module_group_id, module_id, allow_sit_in } = body;
+
+        if (!module_group_id || !module_id || typeof allow_sit_in !== "boolean") {
+            return NextResponse.json({ success: false, message: "Invalid parameters of updating module group mappings request"});
+          }
+
+        await prisma.module_group_mapping.updateMany({
+            where: {
+                module_group_id,
+                module_id,
+                deleted_at: null,
+            },
+            data: {
+                allow_sit_in
+            }
+        });
+
+        return NextResponse.json({
+            success: true,
+            message: "Update module group mapping(sit-in) successfully"
+        })
+    } catch (error) {
+        console.error("[PATCH /api/module_mappings] Update module group mapping error:", error)
+        return NextResponse.json({
+            success: false,
+            message: `Fail to update module group mapping, errMsg: ${(error as Error).message}`
         })
     }
 }
