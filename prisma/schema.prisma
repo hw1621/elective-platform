@@ -148,9 +148,10 @@ model module_group {
 
 model module_group_mapping {
     id                Int     @id @default(autoincrement())
-    module_group_id     Int     
-    module_id           Int 
-
+    module_group_id   Int     
+    module_id         Int
+    allow_sit_in      Boolean @default(false)
+ 
     created_at        DateTime    @default(now())
     modified_at       DateTime    @default(now()) @updatedAt
     deleted_at        DateTime?   
