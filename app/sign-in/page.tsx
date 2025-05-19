@@ -28,7 +28,7 @@ export default function SignInPage() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.logo}>IMPERIAL</h1>
+        <img src="/imperial-logo.png" alt="Imperial Business School" style={styles.logoImage} />
 
         {!role ? (
           <>
@@ -153,5 +153,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'white',
     cursor: 'pointer',
     fontWeight: 600,
+  },
+  logoImage: {
+    width: '100%',
+    maxWidth: 220,
+    marginBottom: 20,
   },
 }
