@@ -3,6 +3,7 @@
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import Image from 'next/image'
 
 export default function SignInPage() {
   const [role, setRole] = useState<'student' | 'admin' | null>(null)
@@ -18,7 +19,7 @@ export default function SignInPage() {
       redirect: false,
     })
 
-    //TODO: modify the return url of student sign-in
+    //TODO:  the return url of student sign-in
 
     if (res?.ok) {
       router.push(role === 'student' ? '/student/dashboard' : '/admin/')
@@ -30,12 +31,11 @@ export default function SignInPage() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <img src="/imperial-logo.png" alt="Imperial Business School" style={styles.logoImage} />
+        <Image src="/imperial-logo.png" alt="Imperial Business School" width={300} height={250} className="mb-5 max-w-[300px] h-auto w-full"/>
 
         {!role ? (
           <>
-            <h2 style={styles.title}>Sign in</h2>
-            <p style={styles.subtitle}>Select your role to continue</p>
+            <p style={styles.subtitle}>Select your role to sign-in</p>
             <div style={styles.buttonGroup}>
               <button style={styles.roleButton} onClick={() => setRole('student')}>
                 🎓 Student
@@ -155,10 +155,5 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'white',
     cursor: 'pointer',
     fontWeight: 600,
-  },
-  logoImage: {
-    width: '100%',
-    maxWidth: 220,
-    marginBottom: 20,
   },
 }
