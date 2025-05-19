@@ -18,10 +18,12 @@ export default function SignInPage() {
       redirect: false,
     })
 
+    //TODO: modify the return url of student sign-in
+
     if (res?.ok) {
-      router.push(role === 'student' ? '/student/dashboard' : '/admin/dashboard')
+      router.push(role === 'student' ? '/student/dashboard' : '/admin/')
     } else {
-      alert('Login failed: incorrect credentials or user not found.')
+      alert(res?.error || 'Login failed: incorrect credentials or user not found.')
     }
   }
 
