@@ -30,6 +30,7 @@ model program {
   routes           route[]
   module_groups    module_group[]
   settings         setting[]
+  students         student[]
 }
 
 model academic_year {
@@ -45,6 +46,7 @@ model academic_year {
   modules            module[]
   module_instances   module_instance[]
   rules              rule[]
+  students           student[]
   @@map("academic_year")
 }
 
@@ -90,12 +92,6 @@ enum term {
   AU
   SEPT
   TBC
-}
-
-enum course_type {
-  COMPULSORY
-  ELECTIVE
-  REQUIRED
 }
 
 model module_instance {
@@ -187,5 +183,40 @@ model setting {
 
   @@unique([program_id, key])
 }
+
+model student {
+  id               Int             @id @default(autoincrement())
+  email            String
+  user_name        String
+  sername          String        
+  given_name       String
+  cid              Int
+  program_id       Int
+  academic_year_id Int         
+
+  created_at       DateTime        @default(now())
+  modified_at      DateTime        @default(now()) @updatedAt
+  deleted_at       DateTime?
+
+  academic_year    academic_year   @relation(fields: [academic_year_id], references: [id])
+  program          program       @relation(fields: [program_id], references: [id])
+}
+
+model admin {
+  id       Int   @id @default(autoincrement())
+  email    String
+  user_name String
+  access_level     AccessLevel     @default(STANDARD)
+
+  created_at       DateTime        @default(now())
+  modified_at      DateTime        @default(now()) @updatedAt
+  deleted_at       DateTime?
+}
+
+enum AccessLevel {
+  SUPER
+  STANDARD 
+}
+
 
 
