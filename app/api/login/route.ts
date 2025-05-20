@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 const prisma = new PrismaClient()
 
@@ -57,5 +59,66 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     )
+  }
+}
+
+//Get student info
+export async function GET(request: Request) {
+  const session = await getServerSession(authOptions)
+  
+  if (!session) {
+    return NextResponse.json(
+      {
+        success: false,
+        data: null,
+        message: 'Unauthorized',
+      },
+      { status: 401 }
+    )
+  }
+
+  if (!session.user?.email) {
+    return NextResponse.json({
+      success: false,
+      message: 'Email not found in session',
+      data: null,
+    }, { status: 400 })
+  }
+
+  try {
+    const student = await prisma.student.findFirst({
+      where: {
+        email: session.user.email,
+      },
+      select: {
+        id: true,
+        email: true,
+        user_name: true,
+        academic_year_id: true,
+        program_id: true,
+      }
+    })
+
+    if (!student) {
+      return NextResponse.json({
+        success: false,
+        message: 'Student not found',
+        data: null,
+      })
+    } else {
+      return NextResponse.json({
+        success: true,
+        message: 'Student found',
+        data: student,
+      })
+    }
+  } catch (error) {
+    console.error('[GET /api/user-exists] Error:', error)
+    return NextResponse.json(
+      {
+        success: false,
+        data: null,
+        message: `Error to fetch student info: ${(error as Error).message}`,
+      }, { status: 500 } )
   }
 }
