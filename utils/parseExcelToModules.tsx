@@ -1,6 +1,4 @@
 import { Module, Rule, ParsedImportRule } from '@/types/rule-types';
-import { group } from 'console';
-import { rule } from 'postcss';
 import * as XLSX from 'xlsx';
 
 export type RawExcelRow = Record<string, any>;
