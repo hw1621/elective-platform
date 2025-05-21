@@ -43,7 +43,7 @@ export default function ProgramRuleConfig() {
     useEffect(() => {
         const fetchRules = async () => {
             try {
-                const data = await fetchWithCheck<Rule[]>(`/api/rules/?program_id=${programId}`);
+                const data = await fetchWithCheck<Rule[]>(`/api/rules?program_id=${programId}`);
                 setRules(data);
             } catch (error) {
                 console.error("Error fetching rules: ", error);
@@ -56,7 +56,7 @@ export default function ProgramRuleConfig() {
     useEffect(() => {
         const fetchModuleGroups = async () => {
             try {
-                const data = await fetchWithCheck<ModuleGroup[]>(`/api/module_group/?program_id=${programId}`)
+                const data = await fetchWithCheck<ModuleGroup[]>(`/api/module_group?program_id=${programId}`)
                 setModuleGroups(data);
             } catch (error) {
                 console.error("Error fetching module groups: ", error);
@@ -69,7 +69,7 @@ export default function ProgramRuleConfig() {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const data = await fetchWithCheck<Array<{ id: number; key: string; value: string }>>(`/api/settings/?program_id=${programId}`);
+                const data = await fetchWithCheck<Array<{ id: number; key: string; value: string }>>(`/api/settings?program_id=${programId}`);
                 const settings = Object.fromEntries(
                     data.map((setting) => [
                         setting.key,
@@ -89,7 +89,7 @@ export default function ProgramRuleConfig() {
     //Refetch route rules (used as refreshing mechanism)
     const refreshRouteRules = async () => {
         try {
-            const refreshed = await fetch(`/api/rules/?program_id=${programId}`);
+            const refreshed = await fetch(`/api/rules?program_id=${programId}`);
             const result = await refreshed.json();
             if (!result.success) {
                 throw new Error(result.message);
@@ -117,7 +117,7 @@ export default function ProgramRuleConfig() {
     //Refetch module groups (used as refreshing mechanism)
     const refreshModuleGroups = async () => {
         try {
-            const data = await fetchWithCheck<ModuleGroup[]>(`/api/module_group/?program_id=${programId}`);
+            const data = await fetchWithCheck<ModuleGroup[]>(`/api/module_group?program_id=${programId}`);
             setModuleGroups(data);
         } catch (error) {
             console.error("Error refetching module groups: ", error);
