@@ -1,5 +1,7 @@
 import { Switch } from "@/components/ui/switch";
+import { SettingKeys } from "@/types/settings-keys";
 import toast from "react-hot-toast";
+import { TimeSettingRow } from "./TimeSettingRow";
 
 interface Props {
    settings: Record<string, { id: number; value: string }>;
@@ -46,23 +48,50 @@ export function SettingSection({
         <div className="space-y-4">
             <h1 className="text-3xl font-bold">Settings</h1>
 
-            <div className="w-[600px] rounded-lg border px-4 py-3 bg-white shadow-sm">
-                <div className="flex items-left gap-x-3">
-                    <Switch
-                        id="enable-sit-in"
-                        checked={settings["enable_sit_in"]?.value === "true"}
-                        onCheckedChange={(checked) =>
-                        updateSetting("enable_sit_in", checked ? "true" : "false")
-                        }
-                    />
-                    <span className="text-base font-medium text-gray-900">
-                        Enable &lsquo;sit-in&rsquo; option
-                    </span>
+            {settings[SettingKeys.ENABLE_SIT_IN] && (
+                <div className="w-[600px] rounded-lg border px-4 py-3 bg-white shadow-sm">
+                    <div className="flex items-left gap-x-3">
+                        <Switch
+                            id={SettingKeys.ENABLE_SIT_IN}
+                            checked={settings[SettingKeys.ENABLE_SIT_IN]?.value === "true"}
+                            onCheckedChange={(checked) =>
+                                updateSetting(SettingKeys.ENABLE_SIT_IN, checked ? "true" : "false")
+                            }
+                        />
+                        <span className="text-base font-medium text-gray-900">
+                            Enable &lsquo;sit-in&rsquo; option
+                        </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                    Allow students to mark a selection as sit-in instead of normal selection.
+                    </p>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                Allow students to mark a selection as sit-in instead of normal selection.
-                </p>
+            )}
+
+            <div className="w-[600px] space-y-4">
+                {settings[SettingKeys.FIRST_ROUND_START_DATE] && (
+                    <TimeSettingRow
+                        label="1st round start date"
+                        settingKey={SettingKeys.FIRST_ROUND_START_DATE}
+                        relatedKey={SettingKeys.FIRST_ROUND_END_DATE}
+                        relation="before"
+                        settings={settings}
+                        updateSetting={updateSetting}
+                    />
+                )}
+
+                {settings[SettingKeys.FIRST_ROUND_END_DATE] && (
+                    <TimeSettingRow
+                        label="1st round end date"
+                        settingKey={SettingKeys.FIRST_ROUND_END_DATE}
+                        relatedKey={SettingKeys.FIRST_ROUND_START_DATE}
+                        relation="after"
+                        settings={settings}
+                        updateSetting={updateSetting}
+                    />
+                )}
             </div>
+
         </div>
     )
 }
