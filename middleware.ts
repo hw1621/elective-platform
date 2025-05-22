@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (pathname.startsWith('/admin') && token?.role !== 'admin') {
-    const redirectUrl = new URL('/unauthorized', request.url) // 👈 你可以换成你自己的警告页
+    const redirectUrl = new URL('/unauthorized', request.url)
     return NextResponse.redirect(redirectUrl)
   }
 
@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
-    // '/student/:path*',
+    '/student/:path*',
     '/',
     '/sign-in',
   ],

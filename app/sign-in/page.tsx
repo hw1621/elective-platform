@@ -22,7 +22,7 @@ export default function SignInPage() {
     //TODO:  the return url of student sign-in
 
     if (res?.ok) {
-      router.push(role === 'student' ? '/student/dashboard' : '/admin/')
+      router.push(role === 'student' ? '/student/' : '/admin/')
     } else {
       alert(res?.error || 'Login failed: incorrect credentials or user not found.')
     }
