@@ -18,7 +18,7 @@ export default function ProgramList() {
     useEffect(() => {
         const fetchPrograms = async () => {
             try {
-                const response = await fetch("/api/programs/?academic_year_id=1");
+                const response = await fetch("/api/programs?academic_year_id=1");
                 const result = await response.json();
                 if (!result.success) {
                     throw new Error(result.message);
