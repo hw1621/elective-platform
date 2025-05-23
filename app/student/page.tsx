@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, FormControl, InputLabel, Select, MenuItem, Tabs, Tab } from "@mui/material";
+import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Tabs, Tab } from "@mui/material";
 import { RouteData, Module } from "@/types/selection-types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
 import { SettingKeys } from "@/types/settings-keys";
@@ -336,7 +336,7 @@ export default function Modules( ) {
   
         {routeData && (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-            <Button variant="outlined" onClick={handleSubmit}>Save</Button>
+            <Button variant="outlined" onClick={handleTemperorySave}>Save</Button>
             <Button variant="contained" color="success" onClick={handleSubmit}>Submit</Button>
           </Box>
         )}
