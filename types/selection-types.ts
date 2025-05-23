@@ -5,6 +5,11 @@ export type Module = {
     ects: number | null,
     term: string,
     allow_sit_in: boolean,
+    learn_teach_approach: string,
+    learning_outcome: string, 
+    module_content: string,
+    reading_list: string,
+    assessment: string,
 }
 
 export type Rule = {

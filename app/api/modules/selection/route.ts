@@ -5,11 +5,10 @@ const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
-    const programId = searchParams.get("program_id");
     const routeId = searchParams.get('route_id')
 
-    if (!programId || !routeId) {
-      return NextResponse.json({ error: "Missing program_id or route_id"}, { status: 400 });
+    if (!routeId) {
+      return NextResponse.json({ error: "Missing route_id"}, { status: 400 });
     }
 
     try {
@@ -17,7 +16,6 @@ export async function GET(request: NextRequest) {
         where: {
           id: parseInt(routeId),
           deleted_at: null,
-          program_id: parseInt(programId),
         },
         select: {
           id: true,
@@ -34,6 +32,9 @@ export async function GET(request: NextRequest) {
                   id: true,
                   name: true,
                   mappings: {
+                    where: {
+                      deleted_at: null
+                    },
                     select: {
                       allow_sit_in: true,
                       module: {
@@ -43,6 +44,11 @@ export async function GET(request: NextRequest) {
                           title: true,
                           ects: true,
                           term: true, 
+                          learn_teach_approach: true,
+                          learning_outcome: true,
+                          module_content: true,
+                          reading_list: true,
+                          assessment: true,
                         }
                       }
                     }
@@ -83,9 +89,9 @@ export async function GET(request: NextRequest) {
         data: formatted, 
       })
     } catch (error) {
-      console.error(`[GET /api/modules/program_modules] Error fetching modules of programId=${programId}, errorMsg=${(error as Error).message}`);
+      console.error(`[GET /api/modules/program_modules] Error fetching modules of routeId=${routeId}, errorMsg=${(error as Error).message}`);
       return NextResponse.json(
-        { error: `Failed to fetch modules of program id = ${programId}`},
+        { success: false, message: `Failed to fetch modules in module selection page`},
         { status: 500 }
       );
     }

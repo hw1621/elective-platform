@@ -1,7 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Tabs, Tab } from "@mui/material";
+import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Tabs, Tab, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import SchoolIcon from '@mui/icons-material/School';
 import { RouteData, Module } from "@/types/selection-types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
 import { SettingKeys } from "@/types/settings-keys";
@@ -21,6 +23,9 @@ export default function Modules( ) {
 
     const [selectedModules, setSelectedModules] = useState<number[]>([]);
     const [sitInModules, setSitInModules] = useState<number[]>([]);
+
+    const [openModuleDialog, setOpenModuleDialog] = useState<boolean>(false);
+    const [dialogModule, setDialogModule] = useState<Module | null>(null);
      
     //Find signed in user information
     useEffect(() => {
@@ -64,7 +69,7 @@ export default function Modules( ) {
     //Find the modules of the program with route_id and program_id
     useEffect(() => {
       if (programId && selectedRouteId) {
-          fetch(`/api/modules/election?program_id=${programId}&&route_id=${selectedRouteId}`)
+          fetch(`/api/modules/selection?route_id=${selectedRouteId}`)
             .then(response => response.json())
             .then(response => {
               if (response.success) {
@@ -282,7 +287,15 @@ export default function Modules( ) {
                           </TableCell>
                         )}
                         <TableCell sx={highlightStyle}>{module.code}</TableCell>
-                        <TableCell sx={highlightStyle}>{module.title}</TableCell>
+                        <TableCell sx={highlightStyle}>
+                          <Button
+                            variant="text"
+                            sx={{ p: 0, minWidth: 0, textTransform: 'none', textDecoration: 'underline', color: 'primary.dark' }}
+                            onClick={() => { setDialogModule(module); setOpenModuleDialog(true)}}
+                          >
+                            {module.title}
+                          </Button>
+                        </TableCell>
                         <TableCell sx={highlightStyle}>{module.term}</TableCell>
                         <TableCell sx={{ ...highlightStyle }} align="right">
                           {module.ects ?? 'N/A'} ECTS
@@ -361,6 +374,89 @@ export default function Modules( ) {
             {successMessage}
           </Alert>
         </Snackbar>
+        
+
+        <Dialog open={openModuleDialog} onClose={() => { setOpenModuleDialog(false); setDialogModule(null); }} fullWidth maxWidth="md">
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              backgroundColor: '#1976d2',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '1.25rem',
+              borderTopLeftRadius: '4px',
+              borderTopRightRadius: '4px',
+            }}
+          >
+            <SchoolIcon />
+            {dialogModule?.title}
+          </DialogTitle>
+
+          <DialogContent
+            dividers
+            sx={{
+              maxHeight: '70vh',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 4,
+            }}
+          >
+            {[
+              { title: 'Module Content', content: dialogModule?.module_content },
+              { title: 'Learning Outcome', content: dialogModule?.learning_outcome },
+              { title: 'Learn Teach Approach', content: dialogModule?.learn_teach_approach },
+              { title: 'Assessment', content: dialogModule?.assessment },
+              { title: 'Reading List', content: dialogModule?.reading_list },
+            ].map(({ title, content }) => (
+              <Box
+                key={title}
+                sx={{
+                  p: 2,
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 2,
+                  backgroundColor: '#fafafa',
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderLeft: '4px solid #1976d2',
+                    pl: 1.5,
+                    mb: 1,
+                    py: 0.5,
+                    backgroundColor: '#e3f2fd',
+                    borderRadius: 1,
+                  }}
+                >
+                  <InfoOutlinedIcon fontSize="small" color="primary" sx={{ mr: 1 }} />
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: 'bold',
+                      fontSize: '1.05rem',
+                      color: 'primary.dark',
+                    }}
+                  >
+                    {title}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ whiteSpace: 'pre-line', color: 'text.primary' }}>
+                  {content || 'None'}
+                </Typography>
+              </Box>
+            ))}
+          </DialogContent>
+
+          <DialogActions>
+            <Button onClick={() => { setOpenModuleDialog(false); setDialogModule(null); }}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     );
 
