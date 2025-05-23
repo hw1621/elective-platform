@@ -47,6 +47,7 @@ model academic_year {
   module_instances   module_instance[]
   rules              rule[]
   students           student[]
+  module_selection_results  module_selection_result[]
   @@map("academic_year")
 }
 
@@ -84,6 +85,7 @@ model module {
 
   module_instances module_instance[]
   module_group_mappings module_group_mapping[]
+  module_selection_results  module_selection_result[]
 } 
 
 enum term {
@@ -167,6 +169,7 @@ model route {
 
   program    program   @relation(fields:[program_id], references: [id])
   rules      rule[]
+  module_selection_results  module_selection_result[]
 }
 
 model setting {
@@ -185,14 +188,15 @@ model setting {
 }
 
 model student {
-  id               Int             @id @default(autoincrement())
-  email            String
-  user_name        String
-  sername          String        
-  given_name       String
-  cid              Int
-  program_id       Int
-  academic_year_id Int         
+  id                Int             @id @default(autoincrement())
+  email             String
+  user_name         String
+  sername           String        
+  given_name        String
+  cid               Int
+  program_id        Int
+  academic_year_id  Int    
+  selection_status  ModuleSelectionStatus   @default(NOT_STARTED)
 
   created_at       DateTime        @default(now())
   modified_at      DateTime        @default(now()) @updatedAt
@@ -200,6 +204,8 @@ model student {
 
   academic_year    academic_year   @relation(fields: [academic_year_id], references: [id])
   program          program       @relation(fields: [program_id], references: [id])
+
+  module_selection_results   module_selection_result[]
 }
 
 model admin {
@@ -216,6 +222,36 @@ model admin {
 enum AccessLevel {
   SUPER
   STANDARD 
+}
+
+enum RegisterLevel {
+  SITIN
+  CREDIT
+}
+
+enum ModuleSelectionStatus {
+  COMPLETE
+  IN_PROGRESS
+  NOT_STARTED
+}
+
+model module_selection_result {
+  id                Int   @id @default(autoincrement())
+  student_id        Int  
+  route_id          Int
+  module_id         Int
+  academic_year_id  Int
+  type             RegisterLevel
+  
+  created_at       DateTime        @default(now())
+  modified_at      DateTime        @default(now()) @updatedAt
+  deleted_at       DateTime?
+
+  academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
+  route         route           @relation(fields: [route_id], references: [id])
+  student       student         @relation(fields: [student_id], references: [id])
+  module        module          @relation(fields: [module_id], references: [id])
+
 }
 
 
