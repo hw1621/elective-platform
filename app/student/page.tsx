@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, FormControl, InputLabel, Select, MenuItem, Tabs, Tab } from "@mui/material";
 import { RouteData, Module } from "@/types/selection-types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
 import { SettingKeys } from "@/types/settings-keys";
 import React from "react";
+import { RegisterLevel } from "@/types/register_level_enum";
+import { SelectionStatus } from "@/types/selection_status_enum";
 
 export default function Modules( ) {
     const [programId, setProgramId] = useState<number | null>(null);
@@ -14,6 +16,7 @@ export default function Modules( ) {
     const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
     const [routeData, setRouteData] = useState<RouteData | null>(null);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [settings, setSettings] = useState<Record<string, { id: number; value: string }>>({});
 
     const [selectedModules, setSelectedModules] = useState<number[]>([]);
@@ -42,7 +45,23 @@ export default function Modules( ) {
         }
     }, [programId])
 
-    //Find the modules given route of the program
+    //Fetch the existing module selections
+    useEffect(() => {
+      const checkPreviousSelections = async () => {
+        const res = await fetch("/api/module_selection_result");
+        const body = await res.json();
+
+        if (body.success && body.data?.selections_by_type) {
+          setSelectedRouteId(body.data.route_id)
+          setSelectedModules(body.data.selections_by_type[RegisterLevel.CREDIT] || [])
+          setSitInModules(body.data.selections_by_type[RegisterLevel.SITIN] || []);
+        }
+      }
+
+      checkPreviousSelections();
+    }, [programId, academicYearId]) 
+
+    //Find the modules of the program with route_id and program_id
     useEffect(() => {
       if (programId && selectedRouteId) {
           fetch(`/api/modules/election?program_id=${programId}&&route_id=${selectedRouteId}`)
@@ -107,62 +126,123 @@ export default function Modules( ) {
 
     const allowSitIn = settings[SettingKeys.ENABLE_SIT_IN]?.value === 'true'
 
-    const handleSubmit = async() => {
-        // const selections = Object.values(grouped_modules).map((group) => {
-        //     const selectedModulesInGroup = group.modules.filter(module => 
-        //         selectedModules.includes(module.module.id)
-        //     ).map(module => ({
-        //         id: module.module.id,
-        //         ects: module.module.ects
-        //     }))
+    const handleSubmit = async () => {
+      if (!programId || !academicYearId || !selectedRouteId) return;
+  
+      const validation = validateSelections();
+      if (!validation.valid) {
+        alert(validation.message);
+        return;
+      }
+  
+      const selections = [
+        ...selectedModules.map(id => ({ module_id: id, type: RegisterLevel.CREDIT })),
+        ...sitInModules.map(id => ({ module_id: id, type: RegisterLevel.SITIN })),
+      ];
+  
+      try {
+        const res = await fetch("/api/module_selection_result", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: SelectionStatus.COMPLETE,
+            academic_year_id: academicYearId,
+            route_id: selectedRouteId,
+            selections,
+          }),
+        });
+  
+        const data = await res.json();
+        if (!data.success) {
+          alert("Fail to update module selections: " + data.message);
+        } else {
+          setSuccessMessage("Final selections submitted successfully.");
+          setSnackbarOpen(true);
+        }
+      } catch (error) {
+        alert("Failed to submit module selections: " + (error as Error).message);
+      }
+    };
 
-        //     return {
-        //         group_id: group.modules[0].module_group.id,
-        //         selected_modules: selectedModulesInGroup
-        //     };
-        // }).filter(selection => selection.selected_modules.length > 0);
+    const handleTemperorySave = async() => {
+      if (!programId || !academicYearId || !selectedRouteId) {
+        return;
+      }
 
-        // try {
-        //     const response = await fetch('/api/programs/check', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //         },
-        //         body: JSON.stringify({
-        //             program_id: programId,
-        //             academic_year_id: academic_year_id,
-        //             selections: selections,
-        //         }),
-        //     });
-        //     const data = await response.json();
-        //     console.log(data);
-        //     if (!response.ok) {
-        //         alert("Module selection is invalid:\n" + data.errors.map((e: {message: string}) => e.message).join("\n"));
-        //         return;
-        //     }
+      const selections = [
+        ...selectedModules.map((moduleId) => ({
+          module_id: moduleId,
+          type: RegisterLevel.CREDIT,
+        })),
+        ...sitInModules.map((moduleId) => ({
+          module_id: moduleId,
+          type: RegisterLevel.SITIN,
+        })),
+      ];
 
-        //     setSnackbarOpen(true);
-        // } catch (error) {
-        //     console.error("Error submitting selected modules:", error);
-        //     alert("An error occurred while submitting the selected modules, please try later");
-        // }
+      try {
+        const res = await fetch("/api/module_selection_result", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: SelectionStatus.IN_PROGRESS,
+            academic_year_id: academicYearId,
+            route_id: selectedRouteId,
+            selections,
+          }),
+        });
+  
+        const data = await res.json();
+        if (!data.success) {
+          alert("Fail to update module selections: " + data.message);
+        } 
+      } catch (error) {
+        alert("Failed to save module selections: " + (error as Error).message);
+      }
+    }
+
+    const validateSelections = (): { valid: boolean; message?: string } => {
+      if (!routeData?.rules) return { valid: true};
+
+      for (const rule of routeData.rules) {
+        const selected = rule.modules.filter(m => selectedModules.includes(m.id))
+        const total = selected.reduce((sum, m) => sum + (Number(m.ects) || 0), 0);
+        const min = rule.min_ects ?? 0;
+        const max = rule.max_ects ?? Infinity;
+
+        if (total < min || total > max) {
+          return {
+            valid: false, 
+            message: `Module group ${rule.module_group_name} requires ${min} - ${max} ECTs. Currently selected ${total}`
+          }
+        }
+      }
+
+      return { valid: true }
     }
 
     return (
       <Container>
-        <Typography variant="h4" gutterBottom>Select Your Route</Typography>
-        <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel>Route</InputLabel>
-          <Select
-            value={selectedRouteId || ''}
-            onChange={(e) => setSelectedRouteId(Number(e.target.value))}
-            disabled={!programId}
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          <strong>Note:</strong><br />
+          1. You must select your intended route before making any module selections.<br />
+          2. Changing your route will clear previously selected modules and require a new selection.<br />
+          3. You can only submit selections for one route.
+        </Typography>
+
+        <Box sx={{ borderBottom: 2, borderColor: 'divider', mb: 2 }}>
+          <Tabs
+            value={selectedRouteId || false}
+            onChange={(_, newValue) => setSelectedRouteId(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="route tabs"
           >
-            {routes.map(route => (
-              <MenuItem key={route.id} value={route.id}>{route.name}</MenuItem>
+            {routes.map((route) => (
+              <Tab key={route.id} label={route.name} value={route.id} sx={{ color: 'text.primary', fontWeight: 600 }} />
             ))}
-          </Select>
-        </FormControl>
+          </Tabs>
+        </Box>
   
         <TableContainer component={Paper} sx={{ mb: 2 }}>
           <Table size="small">
@@ -232,7 +312,7 @@ export default function Modules( ) {
                     <TableCell
                       colSpan={allowSitIn ? 7 : 6}
                       align="right"
-                      sx={{ borderBottom: 'none', py: 2, fontSize: '0.9rem', backgroundColor: '#f9f9f9' }}
+                      sx={{ borderBottom: 'none', py: 2, fontSize: '0.9rem', backgroundColor: 'white' }}
                     >
                       <Box>
                         <Typography component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
@@ -245,7 +325,7 @@ export default function Modules( ) {
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell colSpan={allowSitIn ? 7 : 6} sx={{ height: 12, borderBottom: 'none' }} />
+                    <TableCell colSpan={allowSitIn ? 7 : 6} sx={{ height: 12 }} />
                   </TableRow>
                 </React.Fragment>
               ))}
@@ -264,11 +344,21 @@ export default function Modules( ) {
         <Snackbar
           open={snackbarOpen}
           autoHideDuration={3000}
-          onClose={() => setSnackbarOpen(false)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          onClose={() => {
+            setSnackbarOpen(false);
+            setSuccessMessage(null);
+          }}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
-          <Alert onClose={() => setSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
-            Elective modules saved successfully.
+          <Alert
+            onClose={() => {
+              setSnackbarOpen(false);
+              setSuccessMessage(null);
+            }}
+            severity="success"
+            sx={{ width: "100%" }}
+          >
+            {successMessage}
           </Alert>
         </Snackbar>
       </Container>
