@@ -1,5 +1,3 @@
-'use client';
-
 import { SessionProvider } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 import { getServerSession } from 'next-auth';

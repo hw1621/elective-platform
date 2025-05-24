@@ -270,9 +270,9 @@ export default function Modules( ) {
 
         <Typography variant="body1" sx={{ mb: 2 }}>
           <strong>Note:</strong><br />
-          1. You must select your intended route before making any module selections.<br />
-          2. Changing your route will clear previously selected modules and require a new selection.<br />
-          3. You can only submit selections for one route.
+          1. Please select your intended route before making any module selections.<br />
+          2. Changing your route will clear any previously selected modules.<br />
+          3. You can only submit selections for one route — submitting a new route will overwrite your previous submission.<br />
         </Typography>
 
         {selectionStatus && (
