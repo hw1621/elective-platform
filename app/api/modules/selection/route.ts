@@ -82,7 +82,6 @@ export async function GET(request: NextRequest) {
         }))
       };
       
-      console.log(formatted)
       return NextResponse.json({
         success: true,
         message: "Modules fetched successfully",
