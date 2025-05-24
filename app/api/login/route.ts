@@ -96,6 +96,17 @@ export async function GET() {
         user_name: true,
         academic_year_id: true,
         program_id: true,
+        selection_status: true,
+        program: {
+          select: {
+            title: true,
+          }
+        },
+        academic_year: {
+          select: {
+            name: true,
+          }
+        }
       }
     })
 

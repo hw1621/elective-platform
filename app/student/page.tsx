@@ -13,6 +13,8 @@ import { SelectionStatus } from "@/types/selection_status_enum";
 
 export default function Modules( ) {
     const [programId, setProgramId] = useState<number | null>(null);
+    const [programName, setProgramName] = useState<string | null>(null);
+    const [academicYearName, setAcademicYearName] = useState<string | null>(null);
     const [academicYearId, setAcademicYearId] = useState<number | null>(null);
     const [routes, setRoutes] = useState<{ id: number; name: string }[]>([]);
     const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
@@ -26,17 +28,21 @@ export default function Modules( ) {
 
     const [openModuleDialog, setOpenModuleDialog] = useState<boolean>(false);
     const [dialogModule, setDialogModule] = useState<Module | null>(null);
+    const [selectionStatus, setSelectionStatus] = useState<SelectionStatus | null>(null);
      
     //Find signed in user information
     useEffect(() => {
-        fetch('/api/login')
-            .then(res => res.json())
-            .then(res => {
-                if (res.success && res.data) {
-                    setProgramId(res.data.program_id)
-                    setAcademicYearId(res.data.academic_year_id)
-                }
-            })
+      fetch('/api/login')
+        .then(res => res.json())
+        .then(res => {
+          if (res.success && res.data) {
+            setProgramId(res.data.program_id)
+            setAcademicYearId(res.data.academic_year_id)
+            setProgramName(res.data.program.title)
+            setAcademicYearName(res.data.academic_year.name)
+            setSelectionStatus(res.data.selection_status)
+          }
+        })
     }, [])
 
     //Find routes of enrolled program
@@ -130,6 +136,8 @@ export default function Modules( ) {
     };
 
     const allowSitIn = settings[SettingKeys.ENABLE_SIT_IN]?.value === 'true'
+    const firstRoundStart = settings[SettingKeys.FIRST_ROUND_START_DATE]?.value 
+    const firstRoundEnd = settings[SettingKeys.FIRST_ROUND_END_DATE]?.value
 
     const handleSubmit = async () => {
       if (!programId || !academicYearId || !selectedRouteId) return;
@@ -161,6 +169,7 @@ export default function Modules( ) {
         if (!data.success) {
           alert("Fail to update module selections: " + data.message);
         } else {
+          setSelectionStatus(SelectionStatus.COMPLETE)
           setSuccessMessage("Final selections submitted successfully.");
           setSnackbarOpen(true);
         }
@@ -201,6 +210,7 @@ export default function Modules( ) {
         if (!data.success) {
           alert("Fail to update module selections: " + data.message);
         } 
+        setSelectionStatus(SelectionStatus.IN_PROGRESS)
       } catch (error) {
         alert("Failed to save module selections: " + (error as Error).message);
       }
@@ -226,14 +236,58 @@ export default function Modules( ) {
       return { valid: true }
     }
 
+    const formatDate = (str?: string) => {
+      if (!str) return 'N/A';
+      return new Date(str).toLocaleDateString('en-GB', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+      });
+    };
+    
     return (
       <Container>
+        <Box sx={{ textAlign: 'center', mt: 4, mb: 2 }}>
+          <Typography variant="h4" fontWeight="bold">
+            {programName}
+          </Typography>
+          <Typography variant="h6" color="text.secondary">
+            Module Selection {academicYearName}
+          </Typography>
+        </Box>
+
+        {firstRoundEnd && firstRoundStart && (
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+              1st Round credit registration period:
+              <span style={{ fontStyle: 'italic', fontWeight: 400, marginLeft: 4 }}>
+                {formatDate(firstRoundStart)} – {formatDate(firstRoundEnd)}
+              </span>
+            </Typography>
+          </Box>
+        )}
+
         <Typography variant="body1" sx={{ mb: 2 }}>
           <strong>Note:</strong><br />
           1. You must select your intended route before making any module selections.<br />
           2. Changing your route will clear previously selected modules and require a new selection.<br />
           3. You can only submit selections for one route.
         </Typography>
+
+        {selectionStatus && (
+          <Box sx={{ my: 2 }}>
+            {selectionStatus === SelectionStatus.COMPLETE ? (
+              <Alert severity="success">
+                🎉 You have successfully completed your module selection.
+              </Alert>
+            ) : (
+              <Alert severity="warning">
+                ⏳ Your module selection is still in progress. Please review and submit when ready.
+              </Alert>
+            )}
+          </Box>
+        )}
 
         <Box sx={{ borderBottom: 2, borderColor: 'divider', mb: 2 }}>
           <Tabs
