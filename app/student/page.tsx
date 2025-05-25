@@ -258,8 +258,8 @@ export default function Modules( ) {
         </Box>
 
         {firstRoundEnd && firstRoundStart && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+          <Box sx={{ display: 'flex', justifyContent:'center', alignItems: 'center', mb: 2, gap: 2 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
               1st Round credit registration period:
               <span style={{ fontStyle: 'italic', fontWeight: 400, marginLeft: 4 }}>
                 {formatDate(firstRoundStart)} – {formatDate(firstRoundEnd)}
