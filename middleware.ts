@@ -9,6 +9,7 @@ export async function middleware(request: NextRequest) {
   const isAuth = !!token
   const { pathname } = request.nextUrl
   const isAdmin = token?.role === 'admin'
+  const isStudent = token?.role === 'student'
   const isAuthPage = pathname === '/sign-in'
 
   if (!isAuth && !isAuthPage) {
@@ -23,7 +24,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  if (pathname.startsWith('/admin') && token?.role !== 'admin') {
+  if (pathname.startsWith('/admin') && !isAdmin) {
+    const redirectUrl = new URL('/unauthorized', request.url)
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  if (pathname.startsWith('/student') && !isStudent) {
     const redirectUrl = new URL('/unauthorized', request.url)
     return NextResponse.redirect(redirectUrl)
   }
