@@ -2,7 +2,7 @@
 import { SessionProvider } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <div className="flex flex-col min-h-screen">
