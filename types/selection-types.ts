@@ -27,7 +27,7 @@ export type RouteData = {
 };
 
 export type StudentInfo = {
-    cid: number,
+    cid: string,
     surname: string,
     given_name: string,
     user_name: string,

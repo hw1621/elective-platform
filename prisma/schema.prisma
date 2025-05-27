@@ -54,7 +54,7 @@ model academic_year {
 model module {
   id             Int      @id @default(autoincrement())
   code           String   @db.VarChar(64) @unique
-  lecturer       String?   @db.VarChar(256)
+  lecturer       String?   @db.VarChar(32)
   department     String?   @db.VarChar(32)
   employee_type  String?   @db.VarChar(32)
   subject_area   String?   @db.VarChar(32)
@@ -189,11 +189,11 @@ model setting {
 
 model student {
   id                Int             @id @default(autoincrement())
-  email             String
-  user_name         String
-  surname           String?      
-  given_name        String
-  cid               Int
+  email             String         @db.VarChar(32)
+  user_name         String         @db.VarChar(16)
+  surname           String?        @db.VarChar(16)
+  given_name        String         @db.VarChar(16)
+  cid               String         @db.VarChar(16)
   program_id        Int
   academic_year_id  Int    
   selection_status  ModuleSelectionStatus   @default(NOT_STARTED)
