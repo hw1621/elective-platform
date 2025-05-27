@@ -10,6 +10,7 @@ import { SettingKeys } from "@/types/settings-keys";
 import React from "react";
 import { RegisterLevel } from "@/types/register_level_enum";
 import { SelectionStatus } from "@/types/selection_status_enum";
+import { signOut } from "next-auth/react";
 
 export default function Modules( ) {
     const [programId, setProgramId] = useState<number | null>(null);
@@ -277,16 +278,23 @@ export default function Modules( ) {
             mb: 4,
           }}
         >
-          {firstRoundEnd && firstRoundStart && (
-            <Box sx={{ display: 'flex', justifyContent:'center', alignItems: 'center', mb: 2, gap: 2 }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
+          <Box>
+            {firstRoundEnd && firstRoundStart && (
+              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 2 }}>
                 1st Round credit registration period:
                 <span style={{ fontStyle: 'italic', fontWeight: 400, marginLeft: 4 }}>
                   {formatDate(firstRoundStart)} – {formatDate(firstRoundEnd)}
                 </span>
               </Typography>
-            </Box>
-          )}
+            )}
+
+            <Typography variant="body1">
+              <strong>Note:</strong><br />
+              1. Please select your intended route before making any module selections.<br />
+              2. Changing your route will clear any previously selected modules.<br />
+              3. You can only submit selections for one route — submitting a new route will overwrite your previous submission.<br />
+            </Typography>
+          </Box>
 
           <Box sx={{ maxWidth: 800, mx: 'auto' }}>
             <Typography variant="h6" fontWeight="bold" align="right" gutterBottom>
@@ -294,7 +302,7 @@ export default function Modules( ) {
             </Typography>
 
             {[
-              { label: "Name:", value: `${studentInfo?.surname} ${studentInfo?.given_name} (${studentInfo?.user_name})` },
+              { label: "Name:", value: `${studentInfo?.surname} ${studentInfo?.given_name} (${studentInfo?.user_name})`, showSignOut: true },
               { label: "Email:", value: studentInfo?.email },
               { label: "Degree:", value: programName },
               { label: "CID:", value: `${studentInfo?.cid}` },
@@ -313,20 +321,30 @@ export default function Modules( ) {
                 <Box sx={{ minWidth: 150, fontWeight: "bold", textAlign: "right", pr: 1 }}>
                   {item.label}
                 </Box>
-                <Box sx={{ textAlign: "left" }}>{item.value}</Box>
+                <Box sx={{ textAlign: "left", display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <span>{item.value}</span>
+                  {item.showSignOut && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: 'error.main',
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        fontWeight: 500,
+                        alignItems: 'right',
+                        ml: 1,
+                        '&:hover': { opacity: 0.8 },
+                      }}
+                      onClick={() => signOut({ callbackUrl: '/sign-in' })}
+                    >
+                      Sign out
+                    </Typography>
+                  )}
+                </Box>
               </Box>
             ))}
           </Box>
-
-
         </Box>
-
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          <strong>Note:</strong><br />
-          1. Please select your intended route before making any module selections.<br />
-          2. Changing your route will clear any previously selected modules.<br />
-          3. You can only submit selections for one route — submitting a new route will overwrite your previous submission.<br />
-        </Typography>
 
         {selectionStatus && (
           <Box sx={{ my: 2 }}>
