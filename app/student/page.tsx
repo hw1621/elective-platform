@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Tabs, Tab, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SchoolIcon from '@mui/icons-material/School';
-import { RouteData, Module } from "@/types/selection-types";
+import { RouteData, Module, StudentInfo } from "@/types/selection-types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
 import { SettingKeys } from "@/types/settings-keys";
 import React from "react";
@@ -29,6 +29,8 @@ export default function Modules( ) {
     const [openModuleDialog, setOpenModuleDialog] = useState<boolean>(false);
     const [dialogModule, setDialogModule] = useState<Module | null>(null);
     const [selectionStatus, setSelectionStatus] = useState<SelectionStatus | null>(null);
+
+    const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
      
     //Find signed in user information
     useEffect(() => {
@@ -41,6 +43,14 @@ export default function Modules( ) {
             setProgramName(res.data.program.title)
             setAcademicYearName(res.data.academic_year.name)
             setSelectionStatus(res.data.selection_status)
+            setStudentInfo({
+              user_name: res.data.user_name,
+              given_name: res.data.given_name,
+              surname: res.data.surname,
+              cid: res.data.cid,
+              email: res.data.email,
+            });
+            
           }
         })
     }, [])
@@ -247,8 +257,8 @@ export default function Modules( ) {
     };
     
     return (
-      <Container>
-        <Box sx={{ textAlign: 'center', mt: 4, mb: 2 }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
+        <Box sx={{ textAlign: 'center', mt: 4, mb: 2}}>
           <Typography variant="h4" fontWeight="bold">
             {programName}
           </Typography>
@@ -257,16 +267,59 @@ export default function Modules( ) {
           </Typography>
         </Box>
 
-        {firstRoundEnd && firstRoundStart && (
-          <Box sx={{ display: 'flex', justifyContent:'center', alignItems: 'center', mb: 2, gap: 2 }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
-              1st Round credit registration period:
-              <span style={{ fontStyle: 'italic', fontWeight: 400, marginLeft: 4 }}>
-                {formatDate(firstRoundStart)} – {formatDate(firstRoundEnd)}
-              </span>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            gap: 4,
+            mb: 4,
+          }}
+        >
+          {firstRoundEnd && firstRoundStart && (
+            <Box sx={{ display: 'flex', justifyContent:'center', alignItems: 'center', mb: 2, gap: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', textAlign: 'center' }}>
+                1st Round credit registration period:
+                <span style={{ fontStyle: 'italic', fontWeight: 400, marginLeft: 4 }}>
+                  {formatDate(firstRoundStart)} – {formatDate(firstRoundEnd)}
+                </span>
+              </Typography>
+            </Box>
+          )}
+
+          <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+            <Typography variant="h6" fontWeight="bold" align="right" gutterBottom>
+              User Identity
             </Typography>
+
+            {[
+              { label: "Name:", value: `${studentInfo?.surname} ${studentInfo?.given_name} (${studentInfo?.user_name})` },
+              { label: "Email:", value: studentInfo?.email },
+              { label: "Degree:", value: programName },
+              { label: "CID:", value: `${studentInfo?.cid}` },
+            ].map((item, idx) => (
+              <Box
+                key={idx}
+                sx={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  // fontFamily: "monospace",
+                  fontSize: "1rem",
+                  lineHeight: 1.6,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                <Box sx={{ minWidth: 150, fontWeight: "bold", textAlign: "right", pr: 1 }}>
+                  {item.label}
+                </Box>
+                <Box sx={{ textAlign: "left" }}>{item.value}</Box>
+              </Box>
+            ))}
           </Box>
-        )}
+
+
+        </Box>
 
         <Typography variant="body1" sx={{ mb: 2 }}>
           <strong>Note:</strong><br />
@@ -303,7 +356,7 @@ export default function Modules( ) {
           </Tabs>
         </Box>
   
-        <TableContainer component={Paper} sx={{ mb: 2 }}>
+        <TableContainer component={Paper} sx={{ mb: 2, width: '100%', overflow: 'auto' }}>
           <Table size="small">
 
             <TableHead sx={{ backgroundColor: '#f0f4f8' }}>
@@ -351,7 +404,7 @@ export default function Modules( ) {
                           </Button>
                         </TableCell>
                         <TableCell sx={highlightStyle}>{module.term}</TableCell>
-                        <TableCell sx={{ ...highlightStyle }} align="right">
+                        <TableCell sx={{ ...highlightStyle }} align="left">
                           {module.ects ?? 'N/A'} ECTS
                         </TableCell>
 

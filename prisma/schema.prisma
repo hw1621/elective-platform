@@ -191,7 +191,7 @@ model student {
   id                Int             @id @default(autoincrement())
   email             String
   user_name         String
-  sername           String        
+  surname           String?      
   given_name        String
   cid               Int
   program_id        Int

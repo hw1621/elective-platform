@@ -93,6 +93,9 @@ export async function GET() {
       select: {
         id: true,
         email: true,
+        cid: true,
+        surname: true,
+        given_name: true,
         user_name: true,
         academic_year_id: true,
         program_id: true,

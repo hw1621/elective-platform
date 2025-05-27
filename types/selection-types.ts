@@ -25,3 +25,11 @@ export type RouteData = {
     route_name: string;
     rules: Rule[];
 };
+
+export type StudentInfo = {
+    cid: number,
+    surname: string,
+    given_name: string,
+    user_name: string,
+    email: string,
+};
