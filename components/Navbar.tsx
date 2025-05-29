@@ -35,17 +35,18 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white shadow-md px-6">
-      <div className="flex items-center justify-between py-4">
-        <div className="flex items-center">
+      <div className="flex flex-wrap items-center justify-between py-4 gap-y-4">
+        {/* left region */}
+        <div className="flex flex-wrap items-center gap-x-10 min-w-0">
           <Image src="/imperial-logo.png" alt="Imperial College Logo" width={220} height={220} />
-          <div className="ml-24 flex space-x-10">
+          <div className="flex flex-wrap gap-x-6 sm:gap-x-10 ml-6">
             {navLinks.map(({ href, label }) => {
               const isActive = pathname === href;
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`text-lg font-semibold pb-1 border-b-2 transition ${
+                  className={`text-base font-semibold border-b-2 transition ${
                     isActive
                       ? 'text-blue-700 border-blue-700'
                       : 'text-gray-800 border-transparent hover:text-blue-600 hover:border-blue-300'
@@ -58,9 +59,10 @@ export default function Navbar() {
           </div>
         </div>
 
+        {/* right region */}
         {status === 'authenticated' && (
           <div className="relative" ref={menuRef}>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
               <span role="img" aria-label="wave" className="text-xl">👋</span>
               <span className="text-base font-medium">Welcome!</span>
               <button

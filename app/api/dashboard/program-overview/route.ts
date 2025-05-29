@@ -43,6 +43,10 @@ export async function GET(req: NextRequest) {
             return {
                 program_name: program.short_title,
                 ...statusCounts,
+                total: 
+                    statusCounts[SelectionStatus.COMPLETE] +
+                    statusCounts[SelectionStatus.IN_PROGRESS] + 
+                    statusCounts[SelectionStatus.NOT_STARTED]
             };
         });
         return NextResponse.json({

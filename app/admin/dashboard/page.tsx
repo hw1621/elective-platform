@@ -8,9 +8,11 @@ import {
     Tooltip,
     Legend,
     ResponsiveContainer,
+    LabelList,
   } from "recharts";
 import { useEffect, useState } from "react";
 import { SelectionStatus } from "@/types/selection_status_enum";
+import { RegisterLevel } from "@/types/register_level_enum";
 
 type StudentRegistrationDataItem = {
     program_name: string;
@@ -19,70 +21,201 @@ type StudentRegistrationDataItem = {
     [SelectionStatus.NOT_STARTED]: number;
 }
 
+type ModuleSelectionItem = {
+  module_id: number,
+  title: string,
+  counts: Record<string, number>,
+  total: number,
+}
+
+type Program = {
+  id: number,
+  title: string,
+  code: string,
+  suite: string,
+}
+
 export default function DashboardPage() {
+  //First dashboard
   const [academic_year_id, setAcademicYearId] = useState<number>(1); // ✅ 直接初始化
-    const [studentRegistrationData, setStudentRegistrationData] = useState<StudentRegistrationDataItem[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-    
-    useEffect(() => {
-        const fetchStudentRegistrationData = async () => {
-          if (academic_year_id === null) return;
-          setLoading(true);
-          try {
-              const res = await fetch(`/api/dashboard/program-overview?academic_year_id=${academic_year_id}`);
-              const body = await res.json();
-              if (body.success) {
-                console.log("Fetched chart data:", body.data);
-                setStudentRegistrationData(body.data ?? []);
-              } else {
-                setError("Failed to fetch student registration data. Please try again later.");
-              }
-          } catch (error) {
-              console.error("Error fetching student registration data:", error);
-              setError("Failed to fetch student registration data. Please try again later.");
-          } finally {
-              setLoading(false);
+  const [studentRegistrationData, setStudentRegistrationData] = useState<StudentRegistrationDataItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  //Second dashboard
+  const [moduleSelectionData, setModuleSelectionData] = useState<ModuleSelectionItem[]>([]);
+  const [selectedProgramId, setSelectedProgramId] = useState<number | null>(null); // 可用于切换 program
+  const [moduleError, setModuleError] = useState<string | null>(null);
+  const [moduleLoading, setModuleLoading] = useState(false);
+
+  //All programs
+  const [programs, setPrograms] = useState<Program[]>([]);
+
+  useEffect(() => {
+    const fecthPrograms = async () => {
+      try {
+        const res = await fetch(`/api/programs?academic_year_id=${academic_year_id}`)
+        const body = await res.json();
+        if (body.success) {
+          setPrograms(body.data);
+          if (body.data.length > 0) {
+            setSelectedProgramId(body.data[0].id);
           }
         }
-        fetchStudentRegistrationData();
-    }, [academic_year_id]);
+        console.log("exisiting", programs)
+        console.log("Fetch programs:", body.data)
+      } catch (error) {
+        console.error("Failed to fetch programs", error);
+      }
+    }
+    fecthPrograms();
+  }, [academic_year_id])
+
+  useEffect(() => {
+      const fetchStudentRegistrationData = async () => {
+        if (academic_year_id === null) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/dashboard/program-overview?academic_year_id=${academic_year_id}`);
+            const body = await res.json();
+            if (body.success) {
+              console.log("Fetched chart data:", body.data);
+              setStudentRegistrationData(body.data ?? []);
+            } else {
+              setError("Failed to fetch student registration data. Please try again later.");
+            }
+        } catch (error) {
+            console.error("Error fetching student registration data:", error);
+            setError("Failed to fetch student registration data. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+      }
+      fetchStudentRegistrationData();
+  }, [academic_year_id]);
 
 
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">Program Selection Status Dashboard</h1>
+  useEffect(() => {
+    const fetchModuleSelectionData = async() => {
+      if (!selectedProgramId) return;
+      setModuleLoading(true);
+      try {
+        const res = await fetch(`/api/dashboard/module-overview?program_id=${selectedProgramId}`)
+        const body = await res.json();
+        if (body.success) {
+          setModuleSelectionData(body.data ?? []);
+        } else {
+          setModuleError("Faied to fetch module selection data")
+        }
+      } catch (error) {
+        console.error("Error fetching module selection data:", error);
+        setModuleError("Failed to fetch module selection data.");
+      } finally {
+        setModuleLoading(false)
+      }
+    }
+    fetchModuleSelectionData()
+  }, [selectedProgramId])
 
-        {loading && <p>Loading chart...</p>}
-        {error && <p className="text-red-600">{error}</p>}
+  return (
+    <div className="p-6 space-y-12">
+      {/* Dashboard 1: Program-level selection status */}
+      <section>
+        <h1 className="text-2xl font-bold mb-6">Program Student Registration Status Dashboard</h1>
 
-        {!loading && studentRegistrationData.length > 0 && (
-          <div 
-            className="overflow-x-auto bg-white rounded-xl" 
-            style={{width: '1400px', height: "500px",}}
-          >
-            <ResponsiveContainer width="100%" height={500}>
+        <div className="bg-white rounded-xl shadow p-4 overflow-x-auto" style={{ width: '100%', height: '500px' }}>
+          {loading ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <p className="text-gray-500 text-lg">Loading chart...</p>
+            </div>
+          ): error ? (
+            <p className="text-red-600">{error}</p>
+          ) : studentRegistrationData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={studentRegistrationData}
                 margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
               >
-                <XAxis
-                  dataKey="program_name"
-                  fontSize={15}
-                />
-                <YAxis 
-                  allowDecimals={false} 
-                  tickCount={6}
-                />
+                <XAxis dataKey="program_name" fontSize={15} />
+                <YAxis allowDecimals={false} tickCount={6} />
                 <Tooltip />
                 <Legend verticalAlign="top" align="right" />
-                <Bar dataKey={SelectionStatus.COMPLETE} stackId="a" name="Complete" fill="#22c55e" barSize={60} />
+                <Bar dataKey={SelectionStatus.COMPLETE} stackId="a" name="Complete" fill="#16a34a" barSize={60} />
                 <Bar dataKey={SelectionStatus.IN_PROGRESS} stackId="a" name="In Progress" fill="#9ca3af" />
-                <Bar dataKey={SelectionStatus.NOT_STARTED} stackId="a" name="Not Started" fill="#f87171" />
+                <Bar dataKey={SelectionStatus.NOT_STARTED} stackId="a" name="Not Started" fill="#f87171">
+                  <LabelList dataKey="total" position="top" style={{ fill: '#000', fontWeight: 'bold', fontSize: 16 }} />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
+          ) : (
+            <p className="text-gray-400">No data available</p>
+          )}
+        </div>
+      </section>
+  
+      {/* Dashboard 2: Module-level selection count */}
+      <section>
+        <h2 className="text-2xl font-bold mb-6">Program-level Module Selection Count Dashboard</h2>
+        
+        <div className="bg-white rounded-xl shadow p-4 overflow-y-auto" style={{ width: '100%', height: 600 }}>
+          <div className="mt-3 flex justify-start">
+            {programs.length > 0 && (
+              <div className="mb-6">
+                <label htmlFor="program-select" className="font-medium mr-2">Select Program:</label>
+                <select
+                  id="program-select"
+                  value={selectedProgramId ?? ""}
+                  onChange={(e) => setSelectedProgramId(parseInt(e.target.value))}
+                  className="border rounded p-2"
+                >
+                  {programs.map((program) => (
+                    <option key={program.id} value={program.id}>
+                      {program.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    );
+
+          {moduleLoading ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <p className="text-gray-500 text-lg">Loading module selection count chart...</p>
+            </div>
+          ) : moduleError ? (
+            <p className="text-red-600">{moduleError}</p>
+          ) : moduleSelectionData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={moduleSelectionData.map((item) => ({
+                  title: item.title,
+                  ...item.counts,
+                  total: item.total,
+                }))}
+                layout="vertical"
+                barCategoryGap={3}
+                margin={{ top: 20, right: 40, bottom: 40 }}
+              >
+                <XAxis type="number" allowDecimals={false} tickCount={6}/>
+                <YAxis dataKey="title" type="category" width={310} />
+                <Legend />
+                <Bar dataKey={RegisterLevel.CREDIT} stackId="a" name="Credit" fill="#16a34a" barSize={25}/>
+                <Bar dataKey={RegisterLevel.SITIN} stackId="a" name="Sit-in" fill="#9ca3af">
+                  <LabelList
+                    dataKey="total"
+                    position="right"
+                    style={{ fill: '#000', fontSize: 14, fontWeight: 600 }}
+                  />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-gray-400">No module data available</p>
+          )}
+        </div>
+      </section>
+
+    </div>
+  );
+  
 }
