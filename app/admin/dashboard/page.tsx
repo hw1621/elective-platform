@@ -37,7 +37,8 @@ type Program = {
 
 export default function DashboardPage() {
   //First dashboard
-  const [academic_year_id, setAcademicYearId] = useState<number>(1); // ✅ 直接初始化
+  //TODO: change to dynamic year 
+  const [academic_year_id] = useState<number>(1); // ✅ 直接初始化
   const [studentRegistrationData, setStudentRegistrationData] = useState<StudentRegistrationDataItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
