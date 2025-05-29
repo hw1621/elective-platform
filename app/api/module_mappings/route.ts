@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
                                 id: true,
                                 code: true,
                                 title: true,
+                                ects: true,
                             }
                         }
                     }
@@ -66,6 +67,7 @@ export async function GET(request: NextRequest) {
                 id: true,
                 title: true,
                 code: true,
+                ects: true,
             }
         });
 

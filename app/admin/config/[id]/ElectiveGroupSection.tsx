@@ -234,6 +234,7 @@ export function ElectiveGroupSection({
     }
 
     const editingGroup = moduleGroups.find((g) => g.id === editingGroupId);
+    const totalECTS = includedModules.reduce((sum, mod) => sum + Number(mod.ects || 0), 0);
 
     return (
         <div className="space-y-4">
@@ -326,14 +327,20 @@ export function ElectiveGroupSection({
                         <div className="grid grid-cols-2 gap-8">
                             {/* Included Modules */}
                             <div>
-                                <h3 className='font-semibold mb-2'>Included Modules</h3>
+                                <h3 className='font-semibold mb-2'>
+                                    Included Modules 
+                                    <span className="ml-2 text-sm font-normal text-black">
+                                        (Total ECTS: {totalECTS})
+                                    </span>
+                                </h3>
                                 <div className="border rounded-md p-4 min-h-[200px] max-h-[300px] overflow-y-auto bg-gray-50">
                                     {includedModules.map(mod => (
-                                        <div key={mod.id} 
-                                            className="p-2 bg-white rounded shadow-sm mb-2 cursor-pointer hover:bg-blue-50"
-                                            onClick={() => handleToggleModule(mod, "remove")}
-                                        >
-                                            {mod.code} - {mod.title}
+                                        <div key={mod.id}  className="p-2 bg-white rounded shadow-sm mb-2 cursor-pointer hover:bg-blue-50"
+                                            onClick={() => handleToggleModule(mod, "remove")}>
+                                            <div className="flex justify-between items-center">
+                                                <span>{mod.code} - {mod.title}</span>
+                                                <span className="text-sm text-black">{mod.ects} ECTS</span>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -347,9 +354,11 @@ export function ElectiveGroupSection({
                                     <div
                                         key={mod.id}
                                         className="p-2 bg-white rounded shadow-sm mb-2 cursor-pointer hover:bg-green-50"
-                                        onClick={() => handleToggleModule(mod, "add")}
-                                    >
-                                        {mod.code} - {mod.title}
+                                        onClick={() => handleToggleModule(mod, "add")}>
+                                        <div className="flex justify-between items-center">
+                                            <span>{mod.code} - {mod.title}</span>
+                                            <span className="text-sm text-black">{mod.ects} ECTS</span>
+                                        </div>
                                     </div>
                                 ))}
                                 </div>
