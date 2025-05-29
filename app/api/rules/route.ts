@@ -64,8 +64,6 @@ export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
         const { rule_id, min_ects, max_ects } = body;
-        console.log(typeof(min_ects))
-        console.log(max_ects)
         if (typeof min_ects !== 'number' 
             || typeof max_ects !== 'number'
         ) {
@@ -74,7 +72,38 @@ export async function PATCH(request: NextRequest) {
                 message: "Invalid min_ects or max_ects"
             }, { status: 400 })
         }
-                 
+        
+        const rule = await prisma.rule.findUnique({
+            where: { id: rule_id },
+            select: { module_group_id: true },
+        });
+
+        if (!rule) {
+            return NextResponse.json({
+                success: false,
+                message: "Rule not found",
+            }, { status: 404 });
+        }
+
+        let isCompulsory = false
+        if (min_ects === max_ects) {
+            const groupModules = await prisma.module_group_mapping.findMany({
+                where: {
+                    module_group_id: rule.module_group_id,
+                    deleted_at: null,
+                },
+                include: {
+                    module: {
+                        select: {
+                            ects: true,
+                        }
+                    }
+                }
+            })
+            const totalEcts = groupModules.reduce((sum, m) => sum + Number(m.module.ects), 0)
+            isCompulsory = totalEcts === max_ects
+        }
+
         const updatedRule = await prisma.rule.update({
             where: {
                 id: rule_id,
@@ -82,6 +111,7 @@ export async function PATCH(request: NextRequest) {
             data: {
                 min_ects,
                 max_ects,
+                is_compulsory: isCompulsory,
             },
         });
     
@@ -116,6 +146,27 @@ export async function POST(request: NextRequest) {
                 { success: false, message: "Missing or invalid rule parameters"}
             )
         } 
+
+        let isCompulsory = false
+        if (min_ects === max_ects) {
+            const moduleGroupModules = await prisma.module_group_mapping.findMany({
+                where: {
+                    module_group_id,
+                    deleted_at: null
+                },
+                include: {
+                    module: {
+                        select: {
+                            ects: true
+                        }
+                    }
+                }
+            })
+
+            const totalEcts = moduleGroupModules.reduce((sum, m) => sum + Number(m.module.ects), 0)
+            isCompulsory = min_ects === totalEcts;
+        }
+
         const newRule = await prisma.rule.create({
             data: {
                 program_id,
@@ -123,7 +174,8 @@ export async function POST(request: NextRequest) {
                 module_group_id,
                 academic_year_id,
                 min_ects,
-                max_ects
+                max_ects,
+                is_compulsory: isCompulsory,
             }
         })
 

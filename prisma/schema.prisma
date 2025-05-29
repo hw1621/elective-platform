@@ -121,6 +121,7 @@ model rule {
 
   max_ects         Decimal?   @db.Decimal(4,2)
   min_ects         Decimal?   @db.Decimal(4,2)
+  is_compulsory     Boolean     @default(false)
   created_at        DateTime    @default(now())
   modified_at       DateTime    @default(now()) @updatedAt
   deleted_at        DateTime?
