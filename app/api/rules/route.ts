@@ -91,6 +91,9 @@ export async function PATCH(request: NextRequest) {
                 where: {
                     module_group_id: rule.module_group_id,
                     deleted_at: null,
+                    module: {
+                        deleted_at: null,
+                    }
                 },
                 include: {
                     module: {
