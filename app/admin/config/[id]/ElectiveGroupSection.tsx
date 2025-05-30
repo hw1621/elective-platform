@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { GroupModules, Module, ModuleGroup, ModuleMappingCache, Rule } from "@/types/rule-types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Search, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
