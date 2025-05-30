@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { GroupModules, Module, ModuleGroup, ModuleMappingCache, Rule } from "@/types/rule-types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Search, XCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -32,6 +33,9 @@ export function ElectiveGroupSection({
     const [initialIncludedModules, setInitialIncludedModules] = useState<Set<number>>(new Set<number>());
     const [includedModules, setIncludedModules] = useState<Module[]>([]);
     const [notIncludedModules, setNotIncludedModules] = useState<Module[]>([]);
+
+    const [excludedSearchTerm, setExcludedSearchTerm] = useState('');
+    const [includedSearchTerm, setIncludedSearchTerm] = useState('');
 
     const handleGroupEdit = (group : ModuleGroup) => {
         setEditingGroupId(group.id);
@@ -286,7 +290,7 @@ export function ElectiveGroupSection({
                             </Button>
                             </div>
                         </>
-                        ) : editingGroupId === group.id ? ( // 👈 编辑已有分组
+                        ) : editingGroupId === group.id ? (
                         <>
                             <input
                             type="text"
@@ -300,7 +304,7 @@ export function ElectiveGroupSection({
                             <Button variant="outline" size="sm" onClick={() => handleManageModules(group)}>Manage Modules</Button>
                             </div>
                         </>
-                        ) : ( // 👈 正常显示已有分组
+                        ) : (
                         <>
                             <span className="text-base font-medium capitalize">{group.name}</span>
                             <div className="flex space-x-2 justify-end">
@@ -327,39 +331,81 @@ export function ElectiveGroupSection({
                         <div className="grid grid-cols-2 gap-8">
                             {/* Included Modules */}
                             <div>
-                                <h3 className='font-semibold mb-2'>
-                                    Included Modules 
-                                    <span className="ml-2 text-sm font-normal text-black">
-                                        (Total ECTS: {totalECTS})
-                                    </span>
-                                </h3>
+                                <div className="flex justify-between items-center mb-2">
+                                        <h3 className="font-semibold">
+                                            Included Modules
+                                            <span className="ml-2 text-sm font-normal text-black">
+                                                (Total ECTS: {totalECTS})
+                                            </span>
+                                        </h3>
+                                        <div className="relative w-64">
+                                            <input
+                                                type="text"
+                                                value={includedSearchTerm}
+                                                onChange={(e) => setIncludedSearchTerm(e.target.value)}
+                                                placeholder="Search module..."
+                                                className="w-full px-3 pr-9 py-1 border rounded-md text-sm"
+                                            />
+                                            {includedSearchTerm && (
+                                                <XCircle 
+                                                    className="w-5 h-5 absolute right-8 top-[6px] text-gray-400 cursor-pointer bg-white rounded-full" 
+                                                    onClick={() => setIncludedSearchTerm('')} />
+                                            )}
+                                            <Search className="w-4 h-4 absolute right-2 top-2 text-gray-400 pointer-events-none" />
+                                        </div>
+                                </div>
                                 <div className="border rounded-md p-4 min-h-[200px] max-h-[300px] overflow-y-auto bg-gray-50">
-                                    {includedModules.map(mod => (
-                                        <div key={mod.id}  className="p-2 bg-white rounded shadow-sm mb-2 cursor-pointer hover:bg-blue-50"
-                                            onClick={() => handleToggleModule(mod, "remove")}>
+                                    {includedModules
+                                        .filter(mod => mod.title.toLowerCase().includes(includedSearchTerm.toLowerCase()))
+                                        .map(mod => (
+                                            <div 
+                                                key={mod.id}  
+                                                className="p-2 bg-white rounded shadow-sm mb-2 cursor-pointer hover:bg-blue-50"
+                                                onClick={() => handleToggleModule(mod, "remove")}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <span>{mod.code} - {mod.title}</span>
+                                                    <span className="text-sm text-black">{mod.ects} ECTS</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
+
+                            {/* Excluded Modules */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="font-semibold">Excluded Modules</h3>
+                                    <div className="relative w-64">
+                                        <input
+                                            type="text"
+                                            value={excludedSearchTerm}
+                                            onChange={(e) => setExcludedSearchTerm(e.target.value)}
+                                            placeholder="Search module..."
+                                            className="w-full px-3 pr-9 py-1 border rounded-md text-sm"
+                                        />
+                                        {excludedSearchTerm && (
+                                            <XCircle 
+                                                className="w-5 h-5 absolute right-8 top-[6px] text-gray-400 cursor-pointer bg-white rounded-full" 
+                                                onClick={() => setExcludedSearchTerm('')} />
+                                        )}
+                                        <Search className="w-4 h-4 absolute right-2 top-2 text-gray-400 pointer-events-none" />
+                                    </div>
+                                </div>
+                                <div className="border rounded-md p-4 min-h-[200px] max-h-[300px] overflow-y-auto bg-gray-50">
+                                {notIncludedModules
+                                    .filter(mod => mod.title.toLowerCase().includes(excludedSearchTerm.toLocaleLowerCase()))
+                                    .map(mod => (
+                                        <div
+                                            key={mod.id}
+                                            className="p-2 bg-white rounded shadow-sm mb-2 cursor-pointer hover:bg-green-50"
+                                            onClick={() => handleToggleModule(mod, "add")}
+                                        >
                                             <div className="flex justify-between items-center">
                                                 <span>{mod.code} - {mod.title}</span>
                                                 <span className="text-sm text-black">{mod.ects} ECTS</span>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Not Included Modules */}
-                            <div>
-                                <h3 className='font-semibold mb-2'>Excluded Modules</h3>
-                                <div className="border rounded-md p-4 min-h-[200px] max-h-[300px] overflow-y-auto bg-gray-50">
-                                {notIncludedModules.map(mod => (
-                                    <div
-                                        key={mod.id}
-                                        className="p-2 bg-white rounded shadow-sm mb-2 cursor-pointer hover:bg-green-50"
-                                        onClick={() => handleToggleModule(mod, "add")}>
-                                        <div className="flex justify-between items-center">
-                                            <span>{mod.code} - {mod.title}</span>
-                                            <span className="text-sm text-black">{mod.ects} ECTS</span>
-                                        </div>
-                                    </div>
                                 ))}
                                 </div>
                             </div>
