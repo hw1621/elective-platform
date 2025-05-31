@@ -17,6 +17,7 @@ export type Rule = {
     max_ects: number | null;
     module_group_id: number;
     module_group_name: string;
+    is_compulsory: boolean;
     modules: Module[];
 };
 

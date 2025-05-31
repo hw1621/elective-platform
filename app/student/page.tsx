@@ -431,7 +431,7 @@ export default function Modules( ) {
                             <Checkbox
                               checked={sitInModules.includes(module.id)}
                               onChange={() => handleToggleSitIn(module.id)}
-                              disabled={!module.allow_sit_in}
+                              disabled={!module.allow_sit_in || rule.is_compulsory}
                             />
                           </TableCell>
                         )}
@@ -439,6 +439,7 @@ export default function Modules( ) {
                           <Checkbox
                             checked={selectedModules.includes(module.id)}
                             onChange={() => handleToggleModule(module.id)}
+                            disabled={rule.is_compulsory}
                           />
                         </TableCell>
                       </TableRow>

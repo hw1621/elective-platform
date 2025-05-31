@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
             select: {
               min_ects: true,
               max_ects: true,
+              is_compulsory: true,
               module_group: {
                 select: {
                   id: true,
