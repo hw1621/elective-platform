@@ -1,20 +1,13 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/auth-options";
-import { redirect } from "next/navigation";
-import StudentNavbar from "@/components/StudentNavbar";
+'use client'
+import Navbar from "@/components/Navbar";
+import { SessionProvider } from "next-auth/react";
 
-export default async function StudentLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
-
-  if (!session || session.user?.role !== "student") {
-    redirect("/unauthorized");
-  }
-
+export default function StudentLayout({ children }: { children: React.ReactNode }) {
   return (
-    <> 
-      <StudentNavbar/>
+    <SessionProvider> 
+      <Navbar role='student'/>
       <div className="h-10 bg-[#f9fafb]" />
       {children}
-    </>
+    </SessionProvider>
   );
 }
