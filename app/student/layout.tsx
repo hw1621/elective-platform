@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth-options";
 import { redirect } from "next/navigation";
+import StudentNavbar from "@/components/StudentNavbar";
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
@@ -9,5 +10,11 @@ export default async function StudentLayout({ children }: { children: React.Reac
     redirect("/unauthorized");
   }
 
-  return <>{children}</>;
+  return (
+    <> 
+      <StudentNavbar/>
+      <div className="h-10 bg-[#f9fafb]" />
+      {children}
+    </>
+  );
 }

@@ -277,332 +277,334 @@ export default function Modules( ) {
     };
     
     return (
-      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
-        <Box sx={{ textAlign: 'center', mt: 4, mb: 2}}>
-          <Typography variant="h4" fontWeight="bold">
-            {programName}
-          </Typography>
-          <Typography variant="h6" color="text.secondary">
-            Module Selection {academicYearName}
-          </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            gap: 4,
-            mb: 4,
-          }}
-        >
-          <Box>
-            {firstRoundEnd && firstRoundStart && (
-              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 2 }}>
-                1st Round credit registration period:
-                <span style={{ fontStyle: 'italic', fontWeight: 400, marginLeft: 4 }}>
-                  {formatDate(firstRoundStart)} – {formatDate(firstRoundEnd)}
-                </span>
-              </Typography>
-            )}
-
-            <Typography variant="body1">
-              <strong>Note:</strong><br />
-              1. Please select your intended route before making any module selections.<br />
-              2. Changing your route will clear any previously selected modules.<br />
-              3. You can only submit selections for one route — submitting a new route will overwrite your previous submission.<br />
+      <Box sx={{ backgroundColor: '#f9fafb', minHeight: '100vh' }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 4 } }}>
+          <Box sx={{ textAlign: 'center', mb: 2}}>
+            <Typography variant="h4" fontWeight="bold">
+              {programName}
+            </Typography>
+            <Typography variant="h6" color="text.secondary">
+              Module Selection {academicYearName}
             </Typography>
           </Box>
 
-          <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-            <Typography variant="h6" fontWeight="bold" align="right" gutterBottom>
-              User Identity
-            </Typography>
-
-            {[
-              { label: "Name:", value: `${studentInfo?.surname} ${studentInfo?.given_name} (${studentInfo?.user_name})`, showSignOut: true },
-              { label: "Email:", value: studentInfo?.email },
-              { label: "Degree:", value: programName },
-              { label: "CID:", value: `${studentInfo?.cid}` },
-            ].map((item, idx) => (
-              <Box
-                key={idx}
-                sx={{
-                  display: "flex",
-                  alignItems: "baseline",
-                  // fontFamily: "monospace",
-                  fontSize: "1rem",
-                  lineHeight: 1.6,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                <Box sx={{ minWidth: 150, fontWeight: "bold", textAlign: "right", pr: 1 }}>
-                  {item.label}
-                </Box>
-                <Box sx={{ textAlign: "left", display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <span>{item.value}</span>
-                  {item.showSignOut && (
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'error.main',
-                        textDecoration: 'underline',
-                        cursor: 'pointer',
-                        fontWeight: 500,
-                        alignItems: 'right',
-                        ml: 1,
-                        '&:hover': { opacity: 0.8 },
-                      }}
-                      onClick={() => signOut({ callbackUrl: '/sign-in' })}
-                    >
-                      Sign out
-                    </Typography>
-                  )}
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-
-        {selectionStatus && (
-          <Box sx={{ my: 2 }}>
-            {selectionStatus === SelectionStatus.COMPLETE ? (
-              <Alert severity="success">
-                🎉 You have successfully completed your module selection.
-              </Alert>
-            ) : (
-              <Alert severity="warning">
-                ⏳ Your module selection is still in progress. Please review and submit when ready.
-              </Alert>
-            )}
-          </Box>
-        )}
-
-        <Box sx={{ borderBottom: 2, borderColor: 'divider', mb: 2 }}>
-          <Tabs
-            value={selectedRouteId || false}
-            onChange={(_, newValue) => setSelectedRouteId(newValue)}
-            variant="scrollable"
-            scrollButtons="auto"
-            aria-label="route tabs"
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              gap: 4,
+              mb: 4,
+            }}
           >
-            {routes.map((route) => (
-              <Tab key={route.id} label={route.name} value={route.id} sx={{ color: 'text.primary', fontWeight: 600 }} />
-            ))}
-          </Tabs>
-        </Box>
-  
-        <TableContainer component={Paper} sx={{ mb: 2, width: '100%', overflow: 'auto' }}>
-          <Table size="small">
+            <Box>
+              {firstRoundEnd && firstRoundStart && (
+                <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 2 }}>
+                  1st Round credit registration period:
+                  <span style={{ fontStyle: 'italic', fontWeight: 400, marginLeft: 4 }}>
+                    {formatDate(firstRoundStart)} – {formatDate(firstRoundEnd)}
+                  </span>
+                </Typography>
+              )}
 
-            <TableHead sx={{ backgroundColor: '#f0f4f8' }}>
-              <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
-                <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Group</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Code</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Title</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Term</TableCell>
-                <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Credits</TableCell>
-                <TableCell colSpan={allowSitIn ? 2 : 1} align="center" sx={{ fontWeight: 'bold' }}>Subscription Level</TableCell>
-              </TableRow>
-              <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
-                {allowSitIn && <TableCell sx={{ fontWeight: 'bold' }}>Sit-in</TableCell>}
-                <TableCell sx={{ fontWeight: 'bold' }}>Register</TableCell>
-              </TableRow>
-            </TableHead>
+              <Typography variant="body1">
+                <strong>Note:</strong><br />
+                1. Please select your intended route before making any module selections.<br />
+                2. Changing your route will clear any previously selected modules.<br />
+                3. You can only submit selections for one route — submitting a new route will overwrite your previous submission.<br />
+              </Typography>
+            </Box>
 
-            <TableBody>
-              {routeData?.rules?.map((rule) => (
-                <React.Fragment key={rule.module_group_id}>
-                  {rule.modules.map((module, idx) => {
-                    const isSelected = selectedModules.includes(module.id);
-                    const highlightStyle = isSelected
-                      ? { backgroundColor: '#e3f2fd' }
-                      : {};
+            <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+              <Typography variant="h6" fontWeight="bold" align="right" gutterBottom>
+                User Identity
+              </Typography>
 
-                    return (
-                      <TableRow key={module.id}>
-                        {idx === 0 && (
-                          <TableCell
-                            rowSpan={rule.modules.length}
-                            sx={{ verticalAlign: 'middle', fontWeight: 700, backgroundColor: '#f0f4f8' }}
-                          >
-                            {rule.module_group_name}
+              {[
+                { label: "Name:", value: `${studentInfo?.surname} ${studentInfo?.given_name} (${studentInfo?.user_name})`, showSignOut: true },
+                { label: "Email:", value: studentInfo?.email },
+                { label: "Degree:", value: programName },
+                { label: "CID:", value: `${studentInfo?.cid}` },
+              ].map((item, idx) => (
+                <Box
+                  key={idx}
+                  sx={{
+                    display: "flex",
+                    alignItems: "baseline",
+                    // fontFamily: "monospace",
+                    fontSize: "1rem",
+                    lineHeight: 1.6,
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  <Box sx={{ minWidth: 150, fontWeight: "bold", textAlign: "right", pr: 1 }}>
+                    {item.label}
+                  </Box>
+                  <Box sx={{ textAlign: "left", display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <span>{item.value}</span>
+                    {item.showSignOut && (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: 'error.main',
+                          textDecoration: 'underline',
+                          cursor: 'pointer',
+                          fontWeight: 500,
+                          alignItems: 'right',
+                          ml: 1,
+                          '&:hover': { opacity: 0.8 },
+                        }}
+                        onClick={() => signOut({ callbackUrl: '/sign-in' })}
+                      >
+                        Sign out
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+
+          {selectionStatus && (
+            <Box sx={{ my: 2 }}>
+              {selectionStatus === SelectionStatus.COMPLETE ? (
+                <Alert severity="success">
+                  🎉 You have successfully completed your module selection.
+                </Alert>
+              ) : (
+                <Alert severity="warning">
+                  ⏳ Your module selection is still in progress. Please review and submit when ready.
+                </Alert>
+              )}
+            </Box>
+          )}
+
+          <Box sx={{ borderBottom: 2, borderColor: 'divider', mb: 2 }}>
+            <Tabs
+              value={selectedRouteId || false}
+              onChange={(_, newValue) => setSelectedRouteId(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
+              aria-label="route tabs"
+            >
+              {routes.map((route) => (
+                <Tab key={route.id} label={route.name} value={route.id} sx={{ color: 'text.primary', fontWeight: 600 }} />
+              ))}
+            </Tabs>
+          </Box>
+    
+          <TableContainer component={Paper} sx={{ mb: 2, width: '100%', overflow: 'auto', borderRadius: 2, border: '1px solid', borderColor: '#94a3b8' }}>
+            <Table size="small">
+
+              <TableHead sx={{ backgroundColor: '#f0f4f8' }}>
+                <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
+                  <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Group</TableCell>
+                  <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Code</TableCell>
+                  <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Title</TableCell>
+                  <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Term</TableCell>
+                  <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Credits</TableCell>
+                  <TableCell colSpan={allowSitIn ? 2 : 1} align="center" sx={{ fontWeight: 'bold', borderBottom: '2px solid' }}>Subscription Level</TableCell>
+                </TableRow>
+                <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
+                  {allowSitIn && <TableCell sx={{ fontWeight: 'bold' }}>Sit-in</TableCell>}
+                  <TableCell sx={{ fontWeight: 'bold' }}>Register</TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {routeData?.rules?.map((rule) => (
+                  <React.Fragment key={rule.module_group_id}>
+                    {rule.modules.map((module, idx) => {
+                      const isSelected = selectedModules.includes(module.id);
+                      const highlightStyle = isSelected
+                        ? { backgroundColor: '#e3f2fd' }
+                        : {};
+
+                      return (
+                        <TableRow key={module.id}>
+                          {idx === 0 && (
+                            <TableCell
+                              rowSpan={rule.modules.length}
+                              sx={{ verticalAlign: 'middle', fontWeight: 700, backgroundColor: '#f0f4f8' }}
+                            >
+                              {rule.module_group_name}
+                            </TableCell>
+                          )}
+                          <TableCell sx={highlightStyle}>{module.code}</TableCell>
+                          <TableCell sx={highlightStyle}>
+                            <Button
+                              variant="text"
+                              sx={{ p: 0, minWidth: 0, textTransform: 'none', textDecoration: 'underline', color: 'primary.dark' }}
+                              onClick={() => { setDialogModule(module); setOpenModuleDialog(true)}}
+                            >
+                              {module.title}
+                            </Button>
                           </TableCell>
-                        )}
-                        <TableCell sx={highlightStyle}>{module.code}</TableCell>
-                        <TableCell sx={highlightStyle}>
-                          <Button
-                            variant="text"
-                            sx={{ p: 0, minWidth: 0, textTransform: 'none', textDecoration: 'underline', color: 'primary.dark' }}
-                            onClick={() => { setDialogModule(module); setOpenModuleDialog(true)}}
-                          >
-                            {module.title}
-                          </Button>
-                        </TableCell>
-                        <TableCell sx={highlightStyle}>{module.term}</TableCell>
-                        <TableCell sx={{ ...highlightStyle }} align="left">
-                          {module.ects ?? 'N/A'} ECTS
-                        </TableCell>
+                          <TableCell sx={highlightStyle}>{module.term}</TableCell>
+                          <TableCell sx={{ ...highlightStyle }} align="left">
+                            {module.ects ?? 'N/A'} ECTS
+                          </TableCell>
 
-                        {allowSitIn && (
+                          {allowSitIn && (
+                            <TableCell sx={highlightStyle}>
+                              <Checkbox
+                                checked={sitInModules.includes(module.id)}
+                                onChange={() => handleToggleSitIn(module.id)}
+                                disabled={!module.allow_sit_in || rule.is_compulsory}
+                              />
+                            </TableCell>
+                          )}
                           <TableCell sx={highlightStyle}>
                             <Checkbox
-                              checked={sitInModules.includes(module.id)}
-                              onChange={() => handleToggleSitIn(module.id)}
-                              disabled={!module.allow_sit_in || rule.is_compulsory}
+                              checked={selectedModules.includes(module.id)}
+                              onChange={() => handleToggleModule(module.id)}
+                              disabled={rule.is_compulsory}
                             />
                           </TableCell>
-                        )}
-                        <TableCell sx={highlightStyle}>
-                          <Checkbox
-                            checked={selectedModules.includes(module.id)}
-                            onChange={() => handleToggleModule(module.id)}
-                            disabled={rule.is_compulsory}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                        </TableRow>
+                      );
+                    })}
 
-                  {/* Summary Row & Spacing */}
-                  <TableRow>
-                    <TableCell
-                      colSpan={allowSitIn ? 7 : 6}
-                      align="right"
-                      sx={{ borderBottom: 'none', py: 2, fontSize: '0.9rem', backgroundColor: 'white' }}
-                    >
-                      <Box>
-                        <Typography component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
-                          Selected: {calculateGroupECTS(rule.modules)} ECTS
-                        </Typography>
-                        <Typography component="span" sx={{ ml: 3, fontWeight: 'bold' }}>
-                          Required: {rule.min_ects ?? 0}–{rule.max_ects ?? '∞'} ECTS
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell colSpan={allowSitIn ? 7 : 6} sx={{ height: 12 }} />
-                  </TableRow>
-                </React.Fragment>
-              ))}
-            </TableBody>
+                    {/* Summary Row & Spacing */}
+                    <TableRow>
+                      <TableCell
+                        colSpan={allowSitIn ? 7 : 6}
+                        align="right"
+                        sx={{ borderBottom: 'none', py: 2, fontSize: '0.9rem', backgroundColor: 'white' }}
+                      >
+                        <Box>
+                          <Typography component="span" sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                            Selected: {calculateGroupECTS(rule.modules)} ECTS
+                          </Typography>
+                          <Typography component="span" sx={{ ml: 3, fontWeight: 'bold' }}>
+                            Required: {rule.min_ects ?? 0}–{rule.max_ects ?? '∞'} ECTS
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={allowSitIn ? 7 : 6} sx={{ height: 12 }} />
+                    </TableRow>
+                  </React.Fragment>
+                ))}
+              </TableBody>
 
-          </Table>
-        </TableContainer>
-  
-        {routeData && (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-            <Button variant="outlined" onClick={handleTemperorySave}>Save</Button>
-            <Button variant="contained" color="success" onClick={handleSubmit}>Submit</Button>
-          </Box>
-        )}
+            </Table>
+          </TableContainer>
+    
+          {routeData && (
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+              <Button variant="outlined" onClick={handleTemperorySave}>Save</Button>
+              <Button variant="contained" color="success" onClick={handleSubmit}>Submit</Button>
+            </Box>
+          )}
 
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={3000}
-          onClose={() => {
-            setSnackbarOpen(false);
-            setSuccessMessage(null);
-          }}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={3000}
             onClose={() => {
               setSnackbarOpen(false);
               setSuccessMessage(null);
             }}
-            severity="success"
-            sx={{ width: "100%" }}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
-            {successMessage}
-          </Alert>
-        </Snackbar>
-        
+            <Alert
+              onClose={() => {
+                setSnackbarOpen(false);
+                setSuccessMessage(null);
+              }}
+              severity="success"
+              sx={{ width: "100%" }}
+            >
+              {successMessage}
+            </Alert>
+          </Snackbar>
+          
 
-        <Dialog open={openModuleDialog} onClose={() => { setOpenModuleDialog(false); setDialogModule(null); }} fullWidth maxWidth="md">
-          <DialogTitle
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              backgroundColor: '#1976d2',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '1.25rem',
-              borderTopLeftRadius: '4px',
-              borderTopRightRadius: '4px',
-            }}
-          >
-            <SchoolIcon />
-            {dialogModule?.title}
-          </DialogTitle>
+          <Dialog open={openModuleDialog} onClose={() => { setOpenModuleDialog(false); setDialogModule(null); }} fullWidth maxWidth="md">
+            <DialogTitle
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                backgroundColor: '#1976d2',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: '1.25rem',
+                borderTopLeftRadius: '4px',
+                borderTopRightRadius: '4px',
+              }}
+            >
+              <SchoolIcon />
+              {dialogModule?.title}
+            </DialogTitle>
 
-          <DialogContent
-            dividers
-            sx={{
-              maxHeight: '70vh',
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 4,
-            }}
-          >
-            {[
-              { title: 'Module Content', content: dialogModule?.module_content },
-              { title: 'Learning Outcome', content: dialogModule?.learning_outcome },
-              { title: 'Learn Teach Approach', content: dialogModule?.learn_teach_approach },
-              { title: 'Assessment', content: dialogModule?.assessment },
-              { title: 'Reading List', content: dialogModule?.reading_list },
-            ].map(({ title, content }) => (
-              <Box
-                key={title}
-                sx={{
-                  p: 2,
-                  border: '1px solid #e0e0e0',
-                  borderRadius: 2,
-                  backgroundColor: '#fafafa',
-                }}
-              >
+            <DialogContent
+              dividers
+              sx={{
+                maxHeight: '70vh',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+              }}
+            >
+              {[
+                { title: 'Module Content', content: dialogModule?.module_content },
+                { title: 'Learning Outcome', content: dialogModule?.learning_outcome },
+                { title: 'Learn Teach Approach', content: dialogModule?.learn_teach_approach },
+                { title: 'Assessment', content: dialogModule?.assessment },
+                { title: 'Reading List', content: dialogModule?.reading_list },
+              ].map(({ title, content }) => (
                 <Box
+                  key={title}
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    borderLeft: '4px solid #1976d2',
-                    pl: 1.5,
-                    mb: 1,
-                    py: 0.5,
-                    backgroundColor: '#e3f2fd',
-                    borderRadius: 1,
+                    p: 2,
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 2,
+                    backgroundColor: '#fafafa',
                   }}
                 >
-                  <InfoOutlinedIcon fontSize="small" color="primary" sx={{ mr: 1 }} />
-                  <Typography
-                    variant="subtitle1"
+                  <Box
                     sx={{
-                      fontWeight: 'bold',
-                      fontSize: '1.05rem',
-                      color: 'primary.dark',
+                      display: 'flex',
+                      alignItems: 'center',
+                      borderLeft: '4px solid #1976d2',
+                      pl: 1.5,
+                      mb: 1,
+                      py: 0.5,
+                      backgroundColor: '#e3f2fd',
+                      borderRadius: 1,
                     }}
                   >
-                    {title}
+                    <InfoOutlinedIcon fontSize="small" color="primary" sx={{ mr: 1 }} />
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        fontWeight: 'bold',
+                        fontSize: '1.05rem',
+                        color: 'primary.dark',
+                      }}
+                    >
+                      {title}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-line', color: 'text.primary' }}>
+                    {content || 'None'}
                   </Typography>
                 </Box>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-line', color: 'text.primary' }}>
-                  {content || 'None'}
-                </Typography>
-              </Box>
-            ))}
-          </DialogContent>
+              ))}
+            </DialogContent>
 
-          <DialogActions>
-            <Button onClick={() => { setOpenModuleDialog(false); setDialogModule(null); }}>
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Container>
+            <DialogActions>
+              <Button onClick={() => { setOpenModuleDialog(false); setDialogModule(null); }}>
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Container>
+      </Box>
     );
 
 }
