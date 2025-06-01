@@ -34,7 +34,10 @@ export async function GET(request: NextRequest) {
                   name: true,
                   mappings: {
                     where: {
-                      deleted_at: null
+                      deleted_at: null,
+                      module: {
+                        deleted_at: null
+                      }
                     },
                     select: {
                       allow_sit_in: true,
@@ -76,6 +79,7 @@ export async function GET(request: NextRequest) {
           max_ects: rule.max_ects,
           module_group_id: rule.module_group.id,
           module_group_name: rule.module_group.name,
+          is_compulsory: rule.is_compulsory,
           modules: rule.module_group.mappings.map((mapping) => ({
             allow_sit_in: mapping.allow_sit_in,
             ...mapping.module,
