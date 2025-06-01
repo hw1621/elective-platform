@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Tabs, Tab, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SchoolIcon from '@mui/icons-material/School';
-import { RouteData, Module, StudentInfo } from "@/types/selection-types";
+import { RouteData, Module, StudentInfo, Rule } from "@/types/selection-types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
 import { SettingKeys } from "@/types/settings-keys";
 import React from "react";
@@ -67,36 +67,55 @@ export default function Modules( ) {
         }
     }, [programId])
 
-    //Fetch the existing module selections
+    //1.Fetch the previous module selections result
+    //2.Fetch the module groups and selection rules
+    //3.Clean the module selections and load selection result to useState
     useEffect(() => {
-      const checkPreviousSelections = async () => {
+      if (!programId) {
+        return
+      }
+      const loadAll = async () => {
+
+        // Step 1: Load student's previous selections
         const res = await fetch("/api/module_selection_result");
         const body = await res.json();
-
-        if (body.success && body.data?.selections_by_type) {
-          setSelectedRouteId(body.data.route_id)
-          setSelectedModules(body.data.selections_by_type[RegisterLevel.CREDIT] || [])
-          setSitInModules(body.data.selections_by_type[RegisterLevel.SITIN] || []);
+        if (!body.success) {
+          alert("Failed to fetch previous selection result")
+          return
         }
-      }
+        const routeId = body.data.route_id;
+        setSelectedRouteId(routeId); 
 
-      checkPreviousSelections();
-    }, [programId, academicYearId]) 
+        // Step 2: Load rules and module data for the route
+        const routeRes = await fetch(`/api/modules/selection?route_id=${routeId}`);
+        const routeBody = await routeRes.json();
+        if (!routeBody.success) {
+          alert('Failed to fetch module groups and selections')
+          return
+        }
+        const routeData = routeBody.data;
+        setRouteData(routeData);
 
-    //Find the modules of the program with route_id and program_id
-    useEffect(() => {
-      if (programId && selectedRouteId) {
-          fetch(`/api/modules/selection?route_id=${selectedRouteId}`)
-            .then(response => response.json())
-            .then(response => {
-              if (response.success) {
-                setRouteData(response.data)
-              } else {
-                alert(`Failed to fetch modules: ${response.message}`)
-              }
-            })
+        // Step 3: Clean and load selection
+        const allModuleIds = routeData.rules.flatMap((rule: Rule) => rule.modules.map(mod => mod.id));
+        const compulsoryIds = routeData.rules
+          .filter((rule: Rule) => rule.is_compulsory)
+          .flatMap((rule: Rule) => rule.modules.map(mod => mod.id));
+  
+        const selectedRaw = body.data.selections_by_type[RegisterLevel.CREDIT] || [];
+        const sitInRaw = body.data.selections_by_type[RegisterLevel.SITIN] || [];
+  
+        const selectedCleaned = Array.from(new Set([
+          ...selectedRaw.filter((id: number) => allModuleIds.includes(id)),
+          ...compulsoryIds,
+        ]));
+        const sitInCleaned = sitInRaw.filter((id: number) => allModuleIds.includes(id));
+  
+        setSelectedModules(selectedCleaned);
+        setSitInModules(sitInCleaned);
       }
-    }, [programId, selectedRouteId]);
+      loadAll()
+    }, [programId])
 
     //Find the settings of the program
     useEffect(() => {
