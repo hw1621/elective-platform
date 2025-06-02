@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { GroupModules, Module, ModuleGroup, ModuleMappingCache, Rule } from "@/types/rule-types";
+import { GroupModules, Module, ModuleGroup, ModuleMappingCache, Rule } from "@/types/admin_rule_types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
 import { useState } from "react";
 import { Search, XCircle } from "lucide-react";

@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { Snackbar, Alert, Checkbox, Button, Container, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Tabs, Tab, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import SchoolIcon from '@mui/icons-material/School';
-import { RouteData, Module, StudentInfo, Rule } from "@/types/selection-types";
+import { RouteData, Module, StudentInfo, Rule } from "@/types/student_module_selection_types";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
-import { SettingKeys } from "@/types/settings-keys";
+import { SettingKeys } from "@/types/program_settings_mappings";
 import React from "react";
 import { RegisterLevel } from "@/types/register_level_enum";
 import { SelectionStatus } from "@/types/selection_status_enum";
@@ -426,7 +426,7 @@ export default function Modules( ) {
                           {idx === 0 && (
                             <TableCell
                               rowSpan={rule.modules.length}
-                              sx={{ verticalAlign: 'middle', fontWeight: 700, backgroundColor: '#f0f4f8' }}
+                              sx={{ verticalAlign: 'middle', fontWeight: 700, backgroundColor: '#f0f4f8', border: '1px solid #94a3b8' }}
                             >
                               {rule.module_group_name}
                             </TableCell>

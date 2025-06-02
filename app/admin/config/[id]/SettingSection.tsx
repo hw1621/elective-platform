@@ -1,5 +1,5 @@
 import { Switch } from "@/components/ui/switch";
-import { SettingKeys } from "@/types/settings-keys";
+import { SettingKeys } from "@/types/program_settings_mappings";
 import toast from "react-hot-toast";
 import { TimeSettingRow } from "./TimeSettingRow";
 

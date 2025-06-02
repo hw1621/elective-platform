@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ParsedImportRule } from "@/types/rule-types";
+import { ParsedImportRule } from "@/types/admin_rule_types";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();

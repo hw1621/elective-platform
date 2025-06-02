@@ -1,3 +1,5 @@
+import { RegisterLevel } from "./register_level_enum";
+
 export type Module = {
     id: number,
     code: string,
@@ -34,3 +36,10 @@ export type StudentInfo = {
     user_name: string,
     email: string,
 };
+
+export type BidModule = {
+    id: number,
+    name: string,
+    code: string,
+    type: RegisterLevel
+}

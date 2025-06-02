@@ -1,4 +1,4 @@
-import { Module, Rule, ParsedImportRule } from '@/types/rule-types';
+import { Module, Rule, ParsedImportRule } from '@/types/admin_rule_types';
 import * as XLSX from 'xlsx';
 
 export type RawExcelRow = Record<string, any>;

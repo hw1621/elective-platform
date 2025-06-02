@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ModuleGroup, Rule } from "@/types/rule-types";
+import { ModuleGroup, Rule } from "@/types/admin_rule_types";
 import { useState } from "react";
 
 interface Props {

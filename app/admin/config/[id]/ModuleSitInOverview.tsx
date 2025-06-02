@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { ModuleMappingCache } from "@/types/rule-types";
+import { ModuleMappingCache } from "@/types/admin_rule_types";
 import { Switch } from "@/components/ui/switch";
 
 interface Props {

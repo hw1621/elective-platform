@@ -9,7 +9,7 @@ import { X } from 'lucide-react';
 import { toast } from "react-hot-toast";
 import { exportProgramRulesToExcel, parseRuleExcel } from "@/utils/parseExcelToModules";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
-import { ModuleGroup, ModuleMappingCache, ParsedImportRule, Rule } from "@/types/rule-types";
+import { ModuleGroup, ModuleMappingCache, ParsedImportRule, Rule } from "@/types/admin_rule_types";
 import React from "react";
 import { ElectiveGroupSection } from "./ElectiveGroupSection";
 import { RouteSection } from "./RouteSection";
