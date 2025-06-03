@@ -5,7 +5,7 @@ import { SettingKeys } from '@/types/program_settings_mappings';
 import { SelectionStatus } from '@/types/selection_status_enum';
 import { BidModule } from '@/types/student_module_selection_types';
 import { fetchWithCheck } from '@/utils/fetchWithCheck';
-import { Box, Button, Container, TextField, Typography, Alert, LinearProgress } from '@mui/material';
+import { Box, Button, Container, Typography, Alert, LinearProgress } from '@mui/material';
 
 import toast from 'react-hot-toast';
 import { RegisterLevel } from '@prisma/client';
@@ -47,7 +47,7 @@ export default function AllocateBids() {
         );
         setSettings(settingsObj);
       } catch (error) {
-        toast.error('Error fetching program settings');
+        toast.error(`Error fetching program settings, error: ${(error as Error).message}`);
       }
     };
     fetchSettings();
