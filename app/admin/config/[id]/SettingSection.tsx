@@ -68,30 +68,66 @@ export function SettingSection({
                 </div>
             )}
 
-            <div className="w-[600px] space-y-4">
-                {settings[SettingKeys.FIRST_ROUND_START_DATE] && (
-                    <TimeSettingRow
+            <div className="w-[600px] space-y-6">
+                {/* 1st Round */}
+                <div className="flex gap-20">
+                    {settings[SettingKeys.FIRST_ROUND_START_DATE] && (
+                    <div className="flex-1">
+                        <TimeSettingRow
                         label="1st round start date"
                         settingKey={SettingKeys.FIRST_ROUND_START_DATE}
                         relatedKey={SettingKeys.FIRST_ROUND_END_DATE}
                         relation="before"
                         settings={settings}
                         updateSetting={updateSetting}
-                    />
-                )}
+                        />
+                    </div>
+                    )}
 
-                {settings[SettingKeys.FIRST_ROUND_END_DATE] && (
-                    <TimeSettingRow
+                    
+                    {settings[SettingKeys.FIRST_ROUND_END_DATE] && (
+                    <div className="flex-1">
+                        <TimeSettingRow
                         label="1st round end date"
                         settingKey={SettingKeys.FIRST_ROUND_END_DATE}
                         relatedKey={SettingKeys.FIRST_ROUND_START_DATE}
                         relation="after"
                         settings={settings}
                         updateSetting={updateSetting}
-                    />
-                )}
-            </div>
+                        />
+                    </div>
+                    )}
+                </div>
 
+                {/* 2nd Round */}
+                <div className="flex gap-20">
+                    {settings[SettingKeys.SECOND_ROUND_START_DATE] && (
+                    <div className="flex-1">
+                        <TimeSettingRow
+                        label="2nd round start date"
+                        settingKey={SettingKeys.SECOND_ROUND_START_DATE}
+                        relatedKey={SettingKeys.SECOND_ROUND_END_DATE}
+                        relation="before"
+                        settings={settings}
+                        updateSetting={updateSetting}
+                        />
+                    </div>
+                    )}
+
+                    {settings[SettingKeys.SECOND_ROUND_END_DATE] && (
+                    <div className="flex-1">
+                        <TimeSettingRow
+                        label="2nd round end date"
+                        settingKey={SettingKeys.SECOND_ROUND_END_DATE}
+                        relatedKey={SettingKeys.SECOND_ROUND_START_DATE}
+                        relation="after"
+                        settings={settings}
+                        updateSetting={updateSetting}
+                        />
+                    </div>
+                    )}
+                </div>
+            </div>
         </div>
     )
 }
