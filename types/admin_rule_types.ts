@@ -10,6 +10,11 @@ export type Rule = {
     max_ects: number
 }
 
+export type Route = {
+    id: number,
+    name: string
+}
+
 export type ModuleGroup = {
     id: number;
     name: string;

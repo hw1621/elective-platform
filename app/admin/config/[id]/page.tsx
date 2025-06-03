@@ -9,7 +9,7 @@ import { X } from 'lucide-react';
 import { toast } from "react-hot-toast";
 import { exportProgramRulesToExcel, parseRuleExcel } from "@/utils/parseExcelToModules";
 import { fetchWithCheck } from "@/utils/fetchWithCheck";
-import { ModuleGroup, ModuleMappingCache, ParsedImportRule, Rule } from "@/types/admin_rule_types";
+import { ModuleGroup, ModuleMappingCache, ParsedImportRule, Route, Rule } from "@/types/admin_rule_types";
 import React from "react";
 import { ElectiveGroupSection } from "./ElectiveGroupSection";
 import { RouteSection } from "./RouteSection";
@@ -23,6 +23,7 @@ export default function ProgramRuleConfig() {
     const programTitle = searchParams.get("title");
 
     const [rules, setRules] = useState<Rule[]>([])
+    const [routes, setRoutes] = useState<Route[]>([]);
     const [moduleGroups, setModuleGroups] = useState<ModuleGroup[]>([]);
     const [settings, setSettings] = useState<Record<string, { id: number; value: string }>>({});
     const [moduleMappingCache, setModuleMappingCache] = useState<ModuleMappingCache | null>(null);
@@ -40,6 +41,7 @@ export default function ProgramRuleConfig() {
     //TODO: later modify the academic_year_id to be dynamic
     const academic_year_id = 1;
     
+    //Fetch all rules of the current program
     useEffect(() => {
         const fetchRules = async () => {
             try {
@@ -53,6 +55,21 @@ export default function ProgramRuleConfig() {
         fetchRules();
     }, [programId]);
 
+    //Fetch all routes of the program 
+    useEffect(() => {
+        const fetchRoutes = async () => {
+            try {
+                const data = await fetchWithCheck<Route[]>(`/api/routes?program_id=${programId}`)
+                setRoutes(data)
+            } catch (error) {
+                console.log("Error fetching routes:", error)
+            }
+        }
+
+        fetchRoutes()
+    }, [programId])
+
+    //Fetch all module groups of the program
     useEffect(() => {
         const fetchModuleGroups = async () => {
             try {
@@ -66,6 +83,7 @@ export default function ProgramRuleConfig() {
         fetchModuleGroups();
     }, [programId])
 
+    //Fetch all settings of the program
     useEffect(() => {
         const fetchSettings = async () => {
             try {
@@ -356,6 +374,7 @@ export default function ProgramRuleConfig() {
                         programId={programId}
                         academic_year_id={academic_year_id}
                         moduleGroups={moduleGroups}
+                        routes={routes}
                         rules={rules}
                         setRules={setRules}
                         />
