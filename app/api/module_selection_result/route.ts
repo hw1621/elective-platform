@@ -52,7 +52,7 @@ export async function GET() {
         },
         select: {
           module_id: true,
-          type: true,
+          register_level: true,
           route_id: true,
         },
       });
@@ -62,8 +62,8 @@ export async function GET() {
       }
   
       const selections_by_type = records.reduce((acc, record) => {
-        if (!acc[record.type]) acc[record.type] = [];
-        acc[record.type].push(record.module_id);
+        if (!acc[record.register_level]) acc[record.register_level] = [];
+        acc[record.register_level].push(record.module_id);
         return acc;
       }, {} as Record<string, number[]>);
   
@@ -116,12 +116,12 @@ export async function POST(req: NextRequest) {
               }
             }),
             prisma.module_selection_result.createMany({
-              data: selections.map((s: { module_id: number; type: RegisterLevelValue }) => ({
+              data: selections.map((s: { module_id: number; register_level: RegisterLevelValue }) => ({
                 student_id: student.id,
                 academic_year_id,
                 route_id,
                 module_id: s.module_id,
-                type: s.type,
+                register_level: s.register_level,
               })),
             }),
             prisma.student.update({

@@ -179,8 +179,8 @@ export default function Modules( ) {
       }
   
       const selections = [
-        ...selectedModules.map(id => ({ module_id: id, type: RegisterLevel.CREDIT })),
-        ...sitInModules.map(id => ({ module_id: id, type: RegisterLevel.SITIN })),
+        ...selectedModules.map(id => ({ module_id: id, register_level: RegisterLevel.CREDIT })),
+        ...sitInModules.map(id => ({ module_id: id, register_level: RegisterLevel.SITIN })),
       ];
   
       try {
@@ -216,11 +216,11 @@ export default function Modules( ) {
       const selections = [
         ...selectedModules.map((moduleId) => ({
           module_id: moduleId,
-          type: RegisterLevel.CREDIT,
+          register_level: RegisterLevel.CREDIT,
         })),
         ...sitInModules.map((moduleId) => ({
           module_id: moduleId,
-          type: RegisterLevel.SITIN,
+          register_level: RegisterLevel.SITIN,
         })),
       ];
 

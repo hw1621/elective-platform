@@ -242,7 +242,7 @@ model module_selection_result {
   route_id          Int
   module_id         Int
   academic_year_id  Int
-  type             RegisterLevel
+  register_level             RegisterLevel
   bid_points        Int            @default(0)
   
   created_at       DateTime        @default(now())
