@@ -243,6 +243,7 @@ model module_selection_result {
   module_id         Int
   academic_year_id  Int
   type             RegisterLevel
+  bid_points        Int            @default(0)
   
   created_at       DateTime        @default(now())
   modified_at      DateTime        @default(now()) @updatedAt
