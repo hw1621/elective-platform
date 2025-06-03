@@ -124,8 +124,8 @@ export function exportProgramRulesToExcel(
 
   //Create the route-rules sheet
   const routeRulesSheet = rules.map(rule => ({
-    route_name: rule.route.name,
-    group_name: rule.module_group.name,
+    route_name: rule.route_name,
+    group_name: rule.module_group_name,
     min_ects: rule.min_ects,
     max_ects: rule.max_ects
   }))

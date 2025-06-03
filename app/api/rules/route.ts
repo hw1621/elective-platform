@@ -39,10 +39,22 @@ export async function GET(request: NextRequest) {
             }
         });
         console.log(rules)
+
+        const flattenedRules = rules.map(rule => ({
+            id: rule.id,
+            program_id: rule.program_id,
+            module_group_id: rule.module_group_id,
+            module_group_name: rule.module_group.name,
+            academic_year_id: rule.academic_year_id,
+            route_id: rule.route_id,
+            route_name: rule.route.name,
+            min_ects: rule.min_ects,
+            max_ects: rule.max_ects
+        }));
     
         return NextResponse.json({
             success: true,
-            data: rules,
+            data: flattenedRules,
             message: "Rules fetched successfully"
         }, 
         { status: 200}

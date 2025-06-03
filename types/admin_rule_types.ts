@@ -1,13 +1,11 @@
 export type Rule = {
     id: number;
     program_id: number;
-    module_group: ModuleGroup;
+    module_group_name: string;
     module_group_id: number;
     academic_year_id: number;
     route_id: number,
-    route: {
-        name: string,
-    }
+    route_name: string,
     min_ects: number,
     max_ects: number
 }

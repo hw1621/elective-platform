@@ -144,7 +144,7 @@ export function RouteSection({
     const rulesByRoute = rules.reduce((acc, rule) => {
         if (!acc[rule.route_id]) {
           acc[rule.route_id] = {
-            route_name: rule.route.name,
+            route_name: rule.route_name,
             rules: [],
           };
         }
@@ -180,7 +180,7 @@ export function RouteSection({
                             {rules.map((rule) => (
                                 <div key={rule.id} className="border px-3 py-2 rounded-md bg-gray-50">
                                     <div className="grid grid-cols-[1fr_120px_120px_auto] items-center gap-4 text-sm">
-                                        <div className="font-medium text-gray-900">{rule.module_group.name}</div>
+                                        <div className="font-medium text-gray-900">{rule.module_group_name}</div>
 
                                         {editingRouteRuleId === rule.id ? (
                                         <>
