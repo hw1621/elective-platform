@@ -106,9 +106,11 @@ export function RouteSection({
             setNewRuleForm({});
             setRules((prev) => [...prev, 
                 {
-                  ...result.data,
-                  route: { name: rulesByRoute[routeId].route_name },
-                  module_group: moduleGroups.find(g => g.id === newRuleForm.module_group_id)!
+                    ...result.data,
+                    route_id: routeId,
+                    route_name: routes.find(r => r.id === routeId)?.name ?? "",
+                    module_group_id: newRuleForm.module_group_id!,
+                    module_group_name: moduleGroups.find(g => g.id === newRuleForm.module_group_id)?.name ?? "",
                 }
             ])
         } catch (error) {
@@ -154,8 +156,6 @@ export function RouteSection({
         return acc;
       }, {} as Record<string, { route_name: string; rules: Rule[] }>);
     
-    const usedGroupIds = new Set(rules.map((r) => r.module_group_id));
-
     return (
         <div className="space-y-4">
             <h1 className='text-3xl font-bold'>Routes</h1>
@@ -163,6 +163,7 @@ export function RouteSection({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {routes.map((route) => {
                     const matchedRules = rules.filter(r => r.route_id === route.id);
+                    const usedGroupIds = new Set(matchedRules.map(r => r.module_group_id));
                     return (
                         <div key={route.id} className="border rounded-lg p-3 bg-white shadow-sm">
                             <div className="flex items-center justify-between mb-2">
