@@ -42,4 +42,5 @@ export type BidModule = {
     name: string,
     code: string,
     type: RegisterLevel
+    bid_points: number,
 }
