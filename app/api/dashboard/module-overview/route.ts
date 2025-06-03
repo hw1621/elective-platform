@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
         const excludedModuleIds = new Set(compulsoryModules.map(m => m.module_id));
 
         const groupedModules = await prisma.module_selection_result.groupBy({
-            by: ['module_id', 'type'],
+            by: ['module_id', 'register_level'],
             where: {
                 deleted_at: null,
                 student: {
@@ -66,11 +66,11 @@ export async function GET(req: NextRequest) {
         //Create module selection status which has structure: { 1 : { "SITIN": 1, "REGISTER": 2 }, 2: { "SITIN": 4, "REGISTER": 5 }}
         const moduleStats: Record<number, Record<string, number>> = {}
         for (const entry of groupedModules) {
-            const { module_id, type, _count } = entry;
+            const { module_id, register_level, _count } = entry;
             if (!moduleStats[module_id]) {
                 moduleStats[module_id] = {}
             }
-            moduleStats[module_id][type] = _count._all;
+            moduleStats[module_id][register_level] = _count._all;
         }
 
         const result = Object.entries(moduleStats).map(([moduleId, counts]) => {

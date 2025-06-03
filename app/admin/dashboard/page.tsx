@@ -63,8 +63,6 @@ export default function DashboardPage() {
             setSelectedProgramId(body.data[0].id);
           }
         }
-        console.log("exisiting", programs)
-        console.log("Fetch programs:", body.data)
       } catch (error) {
         console.error("Failed to fetch programs", error);
       }
