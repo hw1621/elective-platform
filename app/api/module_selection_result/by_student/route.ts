@@ -20,6 +20,7 @@ export async function GET() {
       select: {
         id: true,
         program_id: true,
+        route_id: true,
         selection_status: true,
       }
     });
@@ -28,10 +29,46 @@ export async function GET() {
       return NextResponse.json({ success: false, message: "Student not found" }, { status: 404 });
     }
 
+    if (!student.route_id) {
+      return NextResponse.json({ success: false, message: "Student hasn't chosen route yet" }, { status: 404 });
+    }
+
+    const compulsoryModuleIds = await prisma.rule.findMany({
+      where: {
+        route_id: student.route_id,
+        program_id: student.program_id,
+        is_compulsory: true,
+        deleted_at: null,
+      },
+      select: {
+        module_group: {
+          select: {
+            mappings: {
+              where: {
+                deleted_at: null
+              },
+              select: {
+                module_id: true,
+              }
+            }
+          }
+        }
+      }
+    }).then(rules =>
+      rules.flatMap(rule =>
+        rule.module_group.mappings.map(mapping => mapping.module_id)
+      )
+    );
+    
+
     const records = await prisma.module_selection_result.findMany({
       where: {
         student_id: student.id,
+        route_id: student.route_id,
         deleted_at: null,
+        module_id: {
+          notIn: compulsoryModuleIds
+        }
       },
       select: {
         register_level: true,
