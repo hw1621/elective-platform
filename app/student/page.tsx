@@ -100,8 +100,9 @@ export default function Modules( ) {
         //Fetch previous selection result
         const selRes = await fetch("/api/module_selection_result");
         const selBody = await selRes.json();
-  
+        
         if (selBody.success && selBody.data?.selections_by_type && selBody.data.route_id === selectedRouteId) {
+          //Student has made selections before
           const selectedRaw = selBody.data.selections_by_type[RegisterLevel.CREDIT] || [];
           const sitInRaw = selBody.data.selections_by_type[RegisterLevel.SITIN] || [];
   
@@ -116,9 +117,10 @@ export default function Modules( ) {
           setInitialSelectedModules(selectedCleaned);
           setInitialSitInModules(sitInCleaned);
         } else {
+          //Student hasn't made any selections before
           setSelectedModules(compulsoryIds);
           setSitInModules([]);
-          setInitialSelectedModules(compulsoryIds);
+          setInitialSelectedModules([]);
           setInitialSitInModules([]);
         }
       };
@@ -159,7 +161,17 @@ export default function Modules( ) {
     };
 
     const computeInsertAndRemoveModules = () => {
-      const addedCredit = selectedModules.filter(id => !initialSelectedModules.includes(id)).map(id => ({ module_id: id, register_level: RegisterLevel.CREDIT }));
+      const compulsoryIds = routeData?.rules
+        .filter((rule: Rule) => rule.is_compulsory)
+        .flatMap((rule: Rule) => rule.modules.map(m => m.id));
+
+      const addedCredit = selectedModules.
+        filter(id => !initialSelectedModules.includes(id))
+        .map(id => ({ 
+          module_id: id, 
+          register_level: RegisterLevel.CREDIT, 
+          is_compulsory: compulsoryIds?.includes(id) 
+        }));
       const removedCredit = initialSelectedModules.filter(id => !selectedModules.includes(id));
       const addedSitIn = sitInModules.filter(id => !initialSitInModules.includes(id)).map(id => ({ module_id: id, register_level: RegisterLevel.SITIN }));
       const removedSitIn = initialSitInModules.filter(id => !sitInModules.includes(id));

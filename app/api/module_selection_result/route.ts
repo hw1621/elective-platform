@@ -40,7 +40,7 @@ export async function GET() {
 
       if (student.selection_status === 'NOT_STARTED') {
         return NextResponse.json({
-            success: true,
+            success: false,
             data: null,
         })
       }
@@ -106,13 +106,14 @@ export async function POST(req: NextRequest) {
         } 
 
         const now = new Date();
-        const inserts = added.map((entry: { module_id: number; register_level: RegisterLevel }) => {
+        const inserts = added.map((entry: { module_id: number; register_level: RegisterLevel, is_compulsory: boolean }) => {
           return prisma.module_selection_result.create({
             data: {
               student_id: student.id,
               module_id: entry.module_id,
               register_level: entry.register_level,
               academic_year_id,
+              is_compulsory: entry.is_compulsory ?? false,
               route_id,
             },
           });

@@ -75,6 +75,7 @@ model module {
   assessment     String?     @db.Text
   reading_list   String?     @db.Text
   suite          String?   @db.VarChar(32)
+  capacity       Int       @default(0)
   academic_year_id Int
 
   academic_year academic_year @relation(fields: [academic_year_id], references: [id])
@@ -247,6 +248,7 @@ model module_selection_result {
   academic_year_id  Int
   register_level                   RegisterLevel
   bid_points        Int            @default(0)
+  is_compulsory     Boolean        @default(false)
   
   created_at       DateTime        @default(now())
   modified_at      DateTime        @default(now()) @updatedAt
@@ -258,6 +260,3 @@ model module_selection_result {
   module        module          @relation(fields: [module_id], references: [id])
 
 }
-
-
-
