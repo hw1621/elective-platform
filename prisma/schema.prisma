@@ -25,7 +25,6 @@ model program {
   suite            String?     @db.VarChar(32)
    
   academic_year    academic_year  @relation(fields: [academic_year_id], references: [id])
-  module_instances module_instance[]
   rules            rule[]
   routes           route[]
   module_groups    module_group[]
@@ -38,16 +37,17 @@ model academic_year {
   name        String      @db.VarChar(8)
   from_date   DateTime?   
   end_date    DateTime?   
+  is_current  Boolean     @default(false)
   created_at  DateTime    @default(now())
   modified_at DateTime    @updatedAt
   deleted_at  DateTime?
 
   programs           program[]
   modules            module[]
-  module_instances   module_instance[]
   rules              rule[]
   students           student[]
   module_selection_results  module_selection_result[]
+  wait_lists         wait_list[]
   @@map("academic_year")
 }
 
@@ -84,9 +84,9 @@ model module {
   modified_at    DateTime   @default(now()) @updatedAt
   deleted_at     DateTime?
 
-  module_instances module_instance[]
   module_group_mappings module_group_mapping[]
   module_selection_results  module_selection_result[]
+  wait_lists     wait_list[]
 } 
 
 enum term {
@@ -95,22 +95,6 @@ enum term {
   AU
   SEPT
   TBC
-}
-
-model module_instance {
-  id                Int     @id @default(autoincrement())
-  module_id         Int   
-  academic_year_id  Int   
-  program_id        Int   
-  created_at        DateTime    @default(now())
-  modified_at       DateTime    @default(now()) @updatedAt
-  deleted_at        DateTime?
-
-  module        module          @relation(fields: [module_id], references: [id])
-  academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
-  program       program         @relation(fields: [program_id], references: [id])
-
-  @@map("module_instance")
 }
 
 model rule {
@@ -211,6 +195,7 @@ model student {
   route            route?         @relation(fields: [route_id], references: [id])
 
   module_selection_results   module_selection_result[]
+  wait_lists        wait_list[]
 }
 
 model admin {
@@ -240,6 +225,19 @@ enum ModuleSelectionStatus {
   NOT_STARTED
 }
 
+enum BidResult {
+  PENDING
+  SUCCESS
+  WAITLIST
+  FAILED
+}
+
+enum BidRound {
+  ROUND1
+  ROUND2
+  NOT_STARTED
+}
+
 model module_selection_result {
   id                Int   @id @default(autoincrement())
   student_id        Int  
@@ -249,6 +247,8 @@ model module_selection_result {
   register_level                   RegisterLevel
   bid_points        Int            @default(0)
   is_compulsory     Boolean        @default(false)
+  bid_result        BidResult?
+  bid_round         BidRound       @default(NOT_STARTED)
   
   created_at       DateTime        @default(now())
   modified_at      DateTime        @default(now()) @updatedAt
@@ -258,5 +258,23 @@ model module_selection_result {
   route         route           @relation(fields: [route_id], references: [id])
   student       student         @relation(fields: [student_id], references: [id])
   module        module          @relation(fields: [module_id], references: [id])
+  
+}
+
+model wait_list {
+  id                Int     @id @default(autoincrement())
+  student_id        Int
+  module_id         Int
+  academic_year_id  Int
+  bid_points        Int
+  position          Int
+  
+  created_at       DateTime        @default(now())
+  modified_at      DateTime        @default(now()) @updatedAt
+  deleted_at       DateTime?
+
+  student         student  @relation(fields: [student_id], references: [id])
+  module          module   @relation(fields: [module_id], references: [id])
+  academic_year   academic_year @relation(fields: [academic_year_id], references: [id])
 
 }
