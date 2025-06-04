@@ -77,10 +77,11 @@ export function ElectiveGroupSection({
                 ? { ...g, name: groupFormData.name! } 
                 : g
             )));
-            setRules((prev) => prev.map((r) => 
-                r.module_group_id === group.id 
-                    ? {...r, module_group: {...r.module_group, name:groupFormData.name!}}
-                    : r
+            setRules((prev) =>
+                prev.map((r) =>
+                    r.module_group_id === group.id
+                        ? { ...r, module_group_name: groupFormData.name! }
+                        : r
                 )
             );
         setEditingGroupId(null);
