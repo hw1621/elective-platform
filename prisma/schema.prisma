@@ -170,6 +170,7 @@ model route {
 
   program    program   @relation(fields:[program_id], references: [id])
   rules      rule[]
+  students   student[]
   module_selection_results  module_selection_result[]
 }
 
@@ -198,6 +199,7 @@ model student {
   program_id        Int
   academic_year_id  Int    
   selection_status  ModuleSelectionStatus   @default(NOT_STARTED)
+  route_id          Int?
 
   created_at       DateTime        @default(now())
   modified_at      DateTime        @default(now()) @updatedAt
@@ -205,6 +207,7 @@ model student {
 
   academic_year    academic_year   @relation(fields: [academic_year_id], references: [id])
   program          program       @relation(fields: [program_id], references: [id])
+  route            route?         @relation(fields: [route_id], references: [id])
 
   module_selection_results   module_selection_result[]
 }
@@ -242,7 +245,7 @@ model module_selection_result {
   route_id          Int
   module_id         Int
   academic_year_id  Int
-  register_level             RegisterLevel
+  register_level                   RegisterLevel
   bid_points        Int            @default(0)
   
   created_at       DateTime        @default(now())
