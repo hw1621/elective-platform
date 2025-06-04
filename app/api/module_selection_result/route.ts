@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { getServerSession } from 'next-auth'
-import { RegisterLevelValue } from '@/types/register_level_enum'
+import { RegisterLevel } from '@/types/register_level_enum'
 import { authOptions } from '@/auth-options'
 
 const prisma = new PrismaClient()
@@ -100,40 +100,47 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { status, academic_year_id, route_id, selections } = body;
-        if (!academic_year_id || !route_id || !selections || !status) {
+        const { status, academic_year_id, route_id, added, removed } = body;
+        if (!academic_year_id || !route_id || !status) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
         } 
 
         const now = new Date();
-        await prisma.$transaction([
-            prisma.module_selection_result.updateMany({
-              where: {
-                student_id: student.id,
-              },
-              data: {
-                deleted_at: now
-              }
-            }),
-            prisma.module_selection_result.createMany({
-              data: selections.map((s: { module_id: number; register_level: RegisterLevelValue }) => ({
-                student_id: student.id,
-                academic_year_id,
-                route_id,
-                module_id: s.module_id,
-                register_level: s.register_level,
-              })),
-            }),
-            prisma.student.update({
-                where: {
-                    id: student.id
-                },
-                data: {
-                    selection_status: status,
-                    route_id: route_id,
-                }
-            })
-        ]);
+        const inserts = added.map((entry: { module_id: number; register_level: RegisterLevel }) => {
+          return prisma.module_selection_result.create({
+            data: {
+              student_id: student.id,
+              module_id: entry.module_id,
+              register_level: entry.register_level,
+              academic_year_id,
+              route_id,
+            },
+          });
+        });
+
+        const softDeletes = removed.map((moduleId: number) => {
+          return prisma.module_selection_result.updateMany({
+            where: {
+              student_id: student.id,
+              module_id: moduleId,
+              deleted_at: null,
+            },
+            data: {
+              deleted_at: now,
+            },
+          });
+        });
+
+        const updateStudent = prisma.student.update({
+          where: {
+            id: student.id,
+          },
+          data: {
+            selection_status: status,
+            route_id: route_id,
+          }
+        })
+        await prisma.$transaction([...softDeletes, ...inserts, updateStudent]);
 
         return NextResponse.json({
             success: true

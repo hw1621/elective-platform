@@ -31,6 +31,9 @@ export default function Modules( ) {
     const [dialogModule, setDialogModule] = useState<Module | null>(null);
     const [selectionStatus, setSelectionStatus] = useState<SelectionStatus | null>(null);
 
+    const [initialSelectedModules, setInitialSelectedModules] = useState<number[]>([]);
+    const [initialSitInModules, setInitialSitInModules] = useState<number[]>([]);
+
     const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
      
     //Find signed in user information
@@ -110,9 +113,13 @@ export default function Modules( ) {
   
           setSelectedModules(selectedCleaned);
           setSitInModules(sitInCleaned);
+          setInitialSelectedModules(selectedCleaned);
+          setInitialSitInModules(sitInCleaned);
         } else {
           setSelectedModules(compulsoryIds);
           setSitInModules([]);
+          setInitialSelectedModules(compulsoryIds);
+          setInitialSitInModules([]);
         }
       };
   
@@ -142,14 +149,23 @@ export default function Modules( ) {
       }
   }, [programId]);
     
-  const handleToggleModule = (moduleId: number) => {
-    if (selectedModules.includes(moduleId)) {
-      setSelectedModules(prev => prev.filter(id => id !== moduleId));
-    } else {
-      setSelectedModules(prev => [...prev, moduleId]);
-      setSitInModules(prev => prev.filter(id => id !== moduleId));
-    }
-  };
+    const handleToggleModule = (moduleId: number) => {
+      if (selectedModules.includes(moduleId)) {
+        setSelectedModules(prev => prev.filter(id => id !== moduleId));
+      } else {
+        setSelectedModules(prev => [...prev, moduleId]);
+        setSitInModules(prev => prev.filter(id => id !== moduleId));
+      }
+    };
+
+    const computeInsertAndRemoveModules = () => {
+      const addedCredit = selectedModules.filter(id => !initialSelectedModules.includes(id)).map(id => ({ module_id: id, register_level: RegisterLevel.CREDIT }));
+      const removedCredit = initialSelectedModules.filter(id => !selectedModules.includes(id));
+      const addedSitIn = sitInModules.filter(id => !initialSitInModules.includes(id)).map(id => ({ module_id: id, register_level: RegisterLevel.SITIN }));
+      const removedSitIn = initialSitInModules.filter(id => !sitInModules.includes(id));
+
+      return { added: [...addedCredit, ...addedSitIn], removed: [...removedCredit, ...removedSitIn] };
+    }    
 
     const handleToggleSitIn = (moduleId: number) => {
       if (sitInModules.includes(moduleId)) {
@@ -176,21 +192,20 @@ export default function Modules( ) {
         return;
       }
   
-      const selections = [
-        ...selectedModules.map(id => ({ module_id: id, register_level: RegisterLevel.CREDIT })),
-        ...sitInModules.map(id => ({ module_id: id, register_level: RegisterLevel.SITIN })),
-      ];
+      const { added, removed } = computeInsertAndRemoveModules();
+      const payload = {
+        status: SelectionStatus.COMPLETE,
+        academic_year_id: academicYearId,
+        route_id: selectedRouteId,
+        added,
+        removed,
+      }
   
       try {
         const res = await fetch("/api/module_selection_result", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            status: SelectionStatus.COMPLETE,
-            academic_year_id: academicYearId,
-            route_id: selectedRouteId,
-            selections,
-          }),
+          body: JSON.stringify(payload),
         });
   
         const data = await res.json();
@@ -211,16 +226,14 @@ export default function Modules( ) {
         return;
       }
 
-      const selections = [
-        ...selectedModules.map((moduleId) => ({
-          module_id: moduleId,
-          register_level: RegisterLevel.CREDIT,
-        })),
-        ...sitInModules.map((moduleId) => ({
-          module_id: moduleId,
-          register_level: RegisterLevel.SITIN,
-        })),
-      ];
+      const { added, removed } = computeInsertAndRemoveModules();
+      const payload = {
+        status: SelectionStatus.IN_PROGRESS,
+        academic_year_id: academicYearId,
+        route_id: selectedRouteId,
+        added,
+        removed,
+      };
 
       try {
         const res = await fetch("/api/module_selection_result", {
@@ -230,7 +243,7 @@ export default function Modules( ) {
             status: SelectionStatus.IN_PROGRESS,
             academic_year_id: academicYearId,
             route_id: selectedRouteId,
-            selections,
+            payload,
           }),
         });
   
