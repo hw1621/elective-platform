@@ -60,7 +60,7 @@ export async function GET() {
       )
     );
     
-
+    console.log(compulsoryModuleIds)
     const records = await prisma.module_selection_result.findMany({
       where: {
         student_id: student.id,
@@ -95,6 +95,7 @@ export async function GET() {
       bid_points: r.bid_points,
     }));
 
+    console.log(result)
     return NextResponse.json({
       success: true,
       data: {

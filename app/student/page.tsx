@@ -376,7 +376,7 @@ export default function Modules( ) {
                 </Alert>
               ) : (
                 <Alert severity="warning">
-                  ⏳ Your haven't completed your module selection. Please review and submit when ready.
+                  ⏳ Your have not completed your module selection. Please review and submit when ready.
                 </Alert>
               )}
             </Box>

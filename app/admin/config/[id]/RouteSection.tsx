@@ -144,17 +144,6 @@ export function RouteSection({
             alert("Failed to delete rule");
         }
     }
-
-    const rulesByRoute = rules.reduce((acc, rule) => {
-        if (!acc[rule.route_id]) {
-          acc[rule.route_id] = {
-            route_name: rule.route_name,
-            rules: [],
-          };
-        }
-        acc[rule.route_id].rules.push(rule);
-        return acc;
-      }, {} as Record<string, { route_name: string; rules: Rule[] }>);
     
     return (
         <div className="space-y-4">

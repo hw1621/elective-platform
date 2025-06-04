@@ -14,7 +14,6 @@ export default function AllocateBids() {
   const [programId, setProgramId] = useState<number | null>(null);
   const [settings, setSettings] = useState<Record<string, { id: number; value: string }>>({});
 
-  const [totalBids, setTotalBids] = useState<number | null>(null);
   const [bids, setBids] = useState<Record<number, number>>({});
   const [bidsLeft, setBidsLeft] = useState<number | null>(null);
   const [selectedModules, setSelectedModules] = useState<BidModule[]>([]);
@@ -68,7 +67,6 @@ export default function AllocateBids() {
 
     const totalPoints = totalEcts * 10;
     const allocated = Object.values(bids).reduce((sum, p) => sum + p, 0);
-    setTotalBids(totalPoints)
     setBidsLeft(totalPoints - allocated);
   }, [bids, settings]);
 
