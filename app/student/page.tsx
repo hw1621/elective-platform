@@ -21,8 +21,6 @@ export default function Modules( ) {
     const [routes, setRoutes] = useState<{ id: number; name: string }[]>([]);
     const [selectedRouteId, setSelectedRouteId] = useState<number | null>(null);
     const [routeData, setRouteData] = useState<RouteData | null>(null);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [settings, setSettings] = useState<Record<string, { id: number; value: string }>>({});
 
     const [selectedModules, setSelectedModules] = useState<number[]>([]);
@@ -36,6 +34,10 @@ export default function Modules( ) {
     const [initialSitInModules, setInitialSitInModules] = useState<number[]>([]);
 
     const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
+
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+    const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
      
     //Find signed in user information
     useEffect(() => {
@@ -226,7 +228,8 @@ export default function Modules( ) {
           alert("Fail to update module selections: " + data.message);
         } else {
           setSelectionStatus(SelectionStatus.COMPLETE)
-          setSuccessMessage("Final selections submitted successfully.");
+          setSnackbarMessage("Final selections submitted successfully.");
+          setSnackbarSeverity('success')
           setSnackbarOpen(true);
         }
       } catch (error) {
@@ -414,7 +417,9 @@ export default function Modules( ) {
               value={selectedRouteId || false}
               onChange={(_, newValue) => {
                 if (currentBidRound !== BidRound.NOT_STARTED) {
-                  alert("You cannot change route after bidding has started.");
+                  setSnackbarOpen(true)
+                  setSnackbarSeverity('error')
+                  setSnackbarMessage('Cannot change route after bidding start')
                   return
                 }
                 setSelectedRouteId(newValue)
@@ -536,23 +541,23 @@ export default function Modules( ) {
           )}
 
           <Snackbar
-            open={snackbarOpen}
+            open={snackbarOpen && !!snackbarMessage}
             autoHideDuration={3000}
             onClose={() => {
               setSnackbarOpen(false);
-              setSuccessMessage(null);
+              setSnackbarMessage(null);
             }}
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert
               onClose={() => {
                 setSnackbarOpen(false);
-                setSuccessMessage(null);
+                setSnackbarMessage(null);
               }}
-              severity="success"
+              severity={snackbarSeverity}
               sx={{ width: "100%" }}
             >
-              {successMessage}
+              {snackbarMessage}
             </Alert>
           </Snackbar>
           
