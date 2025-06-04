@@ -11,6 +11,7 @@ import React from "react";
 import { RegisterLevel } from "@/types/register_level_enum";
 import { SelectionStatus } from "@/types/selection_status_enum";
 import { signOut } from "next-auth/react";
+import { BidRound } from "@prisma/client";
 
 export default function Modules( ) {
     const [programId, setProgramId] = useState<number | null>(null);
@@ -302,6 +303,7 @@ export default function Modules( ) {
     const allowSitIn = settings[SettingKeys.ENABLE_SIT_IN]?.value === 'true'
     const firstRoundStart = settings[SettingKeys.FIRST_ROUND_START_DATE]?.value 
     const firstRoundEnd = settings[SettingKeys.FIRST_ROUND_END_DATE]?.value
+    const currentBidRound = settings[SettingKeys.CURRENT_BID_ROUND]?.value
     
     return (
       <Box sx={{ backgroundColor: '#f9fafb', minHeight: '100vh' }}>
@@ -410,7 +412,13 @@ export default function Modules( ) {
           <Box sx={{ borderBottom: 2, borderColor: 'divider', mb: 2 }}>
             <Tabs
               value={selectedRouteId || false}
-              onChange={(_, newValue) => setSelectedRouteId(newValue)}
+              onChange={(_, newValue) => {
+                if (currentBidRound !== BidRound.NOT_STARTED) {
+                  alert("You cannot change route after bidding has started.");
+                  return
+                }
+                setSelectedRouteId(newValue)
+              }}
               variant="scrollable"
               scrollButtons="auto"
               aria-label="route tabs"

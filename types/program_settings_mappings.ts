@@ -5,6 +5,7 @@ export const SettingKeys = {
     SECOND_ROUND_START_DATE: "second_round_start_date",
     SECOND_ROUND_END_DATE: "second_round_end_date",
     TOTAL_ECTS: 'total_ects',
+    CURRENT_BID_ROUND: 'current_bid_round',
 } as const
 
 export type SettingKeys = keyof typeof SettingKeys;
