@@ -44,6 +44,7 @@ export default function Modules( ) {
             setProgramName(res.data.program.title)
             setAcademicYearName(res.data.academic_year.name)
             setSelectionStatus(res.data.selection_status)
+            setSelectedRouteId(res.data.route_id)
             setStudentInfo({
               user_name: res.data.user_name,
               given_name: res.data.given_name,
@@ -56,6 +57,13 @@ export default function Modules( ) {
         })
     }, [])
 
+    // fallback 处理：如果没有 route_id，就选第一个 route
+    useEffect(() => {
+      if (!selectedRouteId && routes.length > 0) {
+        setSelectedRouteId(routes[0].id);
+      }
+    }, [routes, selectedRouteId]);
+    
     //Find routes of enrolled program
     useEffect(() => {
         if (programId) {
@@ -67,56 +75,50 @@ export default function Modules( ) {
         }
     }, [programId])
 
-    //1.Fetch the previous module selections result
-    //2.Fetch the module groups and selection rules
-    //3.Clean the module selections and load selection result to useState
+    //Find the module selection data and previous student selectio results after selecting route id  
     useEffect(() => {
-      if (!programId) {
-        return
-      }
-      const loadAll = async () => {
-
-        // Step 1: Load student's previous selections
-        const res = await fetch("/api/module_selection_result");
+      if (!selectedRouteId) return;
+  
+      const loadData = async () => {
+        const res = await fetch(`/api/modules/selection?route_id=${selectedRouteId}`);
         const body = await res.json();
         if (!body.success) {
-          alert("Failed to fetch previous selection result")
-          return
+          alert("Failed to fetch module groups and selections");
+          return;
         }
-        const routeId = body.data.route_id;
-        setSelectedRouteId(routeId); 
-
-        // Step 2: Load rules and module data for the route
-        const routeRes = await fetch(`/api/modules/selection?route_id=${routeId}`);
-        const routeBody = await routeRes.json();
-        if (!routeBody.success) {
-          alert('Failed to fetch module groups and selections')
-          return
-        }
-        const routeData = routeBody.data;
+        const routeData = body.data;
         setRouteData(routeData);
-
-        // Step 3: Clean and load selection
-        const allModuleIds = routeData.rules.flatMap((rule: Rule) => rule.modules.map(mod => mod.id));
+  
+        const allModuleIds = routeData.rules.flatMap((rule: Rule) => rule.modules.map(m => m.id));
         const compulsoryIds = routeData.rules
           .filter((rule: Rule) => rule.is_compulsory)
-          .flatMap((rule: Rule) => rule.modules.map(mod => mod.id));
+          .flatMap((rule: Rule) => rule.modules.map(m => m.id));
   
-        const selectedRaw = body.data.selections_by_type[RegisterLevel.CREDIT] || [];
-        const sitInRaw = body.data.selections_by_type[RegisterLevel.SITIN] || [];
+        //Fetch previous selection result
+        const selRes = await fetch("/api/module_selection_result");
+        const selBody = await selRes.json();
   
-        const selectedCleaned = Array.from(new Set([
-          ...selectedRaw.filter((id: number) => allModuleIds.includes(id)),
-          ...compulsoryIds,
-        ]));
-        const sitInCleaned = sitInRaw.filter((id: number) => allModuleIds.includes(id));
+        if (selBody.success && selBody.data?.selections_by_type && selBody.data.route_id === selectedRouteId) {
+          const selectedRaw = selBody.data.selections_by_type[RegisterLevel.CREDIT] || [];
+          const sitInRaw = selBody.data.selections_by_type[RegisterLevel.SITIN] || [];
   
-        setSelectedModules(selectedCleaned);
-        setSitInModules(sitInCleaned);
-      }
-      loadAll()
-    }, [programId])
-
+          const selectedCleaned = Array.from(new Set([
+            ...selectedRaw.filter((id: number) => allModuleIds.includes(id)),
+            ...compulsoryIds,
+          ]));
+          const sitInCleaned = sitInRaw.filter((id: number) => allModuleIds.includes(id));
+  
+          setSelectedModules(selectedCleaned);
+          setSitInModules(sitInCleaned);
+        } else {
+          setSelectedModules(compulsoryIds);
+          setSitInModules([]);
+        }
+      };
+  
+      loadData();
+    }, [selectedRouteId]);
+        
     //Find the settings of the program
     useEffect(() => {
       if (programId) {
@@ -164,10 +166,6 @@ export default function Modules( ) {
       const total = filtered.reduce((sum, m) => sum + (Number(m.ects) || 0), 0);
       return total.toFixed(1);
     };
-
-    const allowSitIn = settings[SettingKeys.ENABLE_SIT_IN]?.value === 'true'
-    const firstRoundStart = settings[SettingKeys.FIRST_ROUND_START_DATE]?.value 
-    const firstRoundEnd = settings[SettingKeys.FIRST_ROUND_END_DATE]?.value
 
     const handleSubmit = async () => {
       if (!programId || !academicYearId || !selectedRouteId) return;
@@ -275,6 +273,10 @@ export default function Modules( ) {
         day: '2-digit',
       });
     };
+
+    const allowSitIn = settings[SettingKeys.ENABLE_SIT_IN]?.value === 'true'
+    const firstRoundStart = settings[SettingKeys.FIRST_ROUND_START_DATE]?.value 
+    const firstRoundEnd = settings[SettingKeys.FIRST_ROUND_END_DATE]?.value
     
     return (
       <Box sx={{ backgroundColor: '#f9fafb', minHeight: '100vh' }}>
@@ -374,7 +376,7 @@ export default function Modules( ) {
                 </Alert>
               ) : (
                 <Alert severity="warning">
-                  ⏳ Your module selection is still in progress. Please review and submit when ready.
+                  ⏳ Your haven't completed your module selection. Please review and submit when ready.
                 </Alert>
               )}
             </Box>

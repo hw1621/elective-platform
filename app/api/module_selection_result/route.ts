@@ -66,7 +66,7 @@ export async function GET() {
         acc[record.register_level].push(record.module_id);
         return acc;
       }, {} as Record<string, number[]>);
-  
+      
       return NextResponse.json({
         success: true,
         data: {
@@ -129,7 +129,8 @@ export async function POST(req: NextRequest) {
                     id: student.id
                 },
                 data: {
-                    selection_status: status
+                    selection_status: status,
+                    route_id: route_id,
                 }
             })
         ]);

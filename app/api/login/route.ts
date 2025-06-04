@@ -100,6 +100,7 @@ export async function GET() {
         academic_year_id: true,
         program_id: true,
         selection_status: true,
+        route_id: true,
         program: {
           select: {
             title: true,
