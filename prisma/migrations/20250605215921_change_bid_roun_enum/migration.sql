@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "BidRound" ADD VALUE 'NOT_STARTED';

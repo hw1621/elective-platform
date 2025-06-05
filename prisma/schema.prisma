@@ -229,12 +229,13 @@ enum BidResult {
   PENDING
   SUCCESS
   WAITLIST
-  DROPPED
+  DROP
 }
 
 enum BidRound {
   ROUND1
   ROUND2
+  NOT_STARTED
 }
 
 model module_selection_result {
