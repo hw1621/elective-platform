@@ -69,7 +69,7 @@ export async function GET() {
       .filter(r => r.bid_result === BidResult.WAITLIST)
       .map(r => r.module_id);
 
-    let waitlistPositionMap: Record<number, number> = {};
+    const waitlistPositionMap: Record<number, number> = {};
     if (waitlistedModuleIds.length > 0) {
       const waitlistEntries = await prisma.wait_list.findMany({
         where: {

@@ -742,11 +742,11 @@ export default function Modules( ) {
   
               <Box component="ul" sx={{ pl: 3, mb: 2, listStyle: 'disc', listStylePosition: 'inside' }}>
                 {modulesToDrop.map(id => {
-                  const module = routeData?.rules.flatMap(r => r.modules).find(m => m.id === id);
+                  const mod = routeData?.rules.flatMap(r => r.modules).find(m => m.id === id);
                   return (
                     <li key={id}>
                       <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                        {module?.title ?? `Module ${id}`}
+                        {mod?.title ?? `Module ${id}`}
                       </Typography>
                     </li>
                   );
