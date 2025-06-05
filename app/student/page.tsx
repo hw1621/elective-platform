@@ -11,7 +11,9 @@ import React from "react";
 import { RegisterLevel } from "@/types/register_level_enum";
 import { SelectionStatus } from "@/types/selection_status_enum";
 import { signOut } from "next-auth/react";
-import { BidRound } from "@prisma/client";
+import { BidResult } from "@/types/bid_result_enum";
+import { BidRound } from "@/types/bid_round_enum";
+import { getCurrentBidRound } from "@/utils/calculateBidRound";
 
 export default function Modules( ) {
     const [programId, setProgramId] = useState<number | null>(null);
@@ -23,21 +25,27 @@ export default function Modules( ) {
     const [routeData, setRouteData] = useState<RouteData | null>(null);
     const [settings, setSettings] = useState<Record<string, { id: number; value: string }>>({});
 
+    const [currentBidRound, setCurrentBidRound] = useState<BidRound>(BidRound.NOT_STARTED);
+    //The map of bidding allocation result
+    const [bidResultMap, setBidResultMap] = useState<Record<number, { result: string; rank?: number }>>({});
+
+    //Initial module selection state and final module selection state
     const [selectedModules, setSelectedModules] = useState<number[]>([]);
     const [sitInModules, setSitInModules] = useState<number[]>([]);
+    const [initialSelectedModules, setInitialSelectedModules] = useState<number[]>([]);
+    const [initialSitInModules, setInitialSitInModules] = useState<number[]>([]);
 
     const [openModuleDialog, setOpenModuleDialog] = useState<boolean>(false);
     const [dialogModule, setDialogModule] = useState<Module | null>(null);
     const [selectionStatus, setSelectionStatus] = useState<SelectionStatus | null>(null);
-
-    const [initialSelectedModules, setInitialSelectedModules] = useState<number[]>([]);
-    const [initialSitInModules, setInitialSitInModules] = useState<number[]>([]);
 
     const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
 
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
     const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+    const [confirmDropOpen, setConfirmDropOpen] = useState(false);
+    const [modulesToDrop, setModulesToDrop] = useState<number[]>([]);
      
     //Find signed in user information
     useEffect(() => {
@@ -63,7 +71,7 @@ export default function Modules( ) {
         })
     }, [])
 
-    // fallback 处理：如果没有 route_id，就选第一个 route
+    // fallback: if haven't selected route_id, then automatically chosing first route
     useEffect(() => {
       if (!selectedRouteId && routes.length > 0) {
         setSelectedRouteId(routes[0].id);
@@ -101,8 +109,21 @@ export default function Modules( ) {
           .flatMap((rule: Rule) => rule.modules.map(m => m.id));
   
         //Fetch previous selection result
-        const selRes = await fetch("/api/module_selection_result");
+        const selRes = await fetch(`/api/module_selection_result`);
         const selBody = await selRes.json();
+
+        if (selBody.success && selBody.data?.records) {
+          const bidMap: Record<number, { result: string; rank?: number }> = {};
+          selBody.data.records.forEach((r: { module_id: number; bid_result: string | null; rank?: number }) => {
+            if (r.bid_result) {
+              bidMap[r.module_id] = {
+                result: r.bid_result,
+                rank: r.rank,
+              }
+            }
+          });
+          setBidResultMap(bidMap);
+        }
         
         if (selBody.success && selBody.data?.selections_by_type && selBody.data.route_id === selectedRouteId) {
           //Student has made selections before
@@ -145,6 +166,7 @@ export default function Modules( ) {
               );
 
               setSettings(settings);
+              setCurrentBidRound(getCurrentBidRound(settings))
           } catch (error) {
             console.log(error)
             alert("Error fetching program settings")
@@ -155,6 +177,13 @@ export default function Modules( ) {
   }, [programId]);
     
     const handleToggleModule = (moduleId: number) => {
+      if (currentBidRound === BidRound.NOT_STARTED) {
+        setSnackbarMessage("Bidding has not started yet.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+        return;
+      }
+
       if (selectedModules.includes(moduleId)) {
         setSelectedModules(prev => prev.filter(id => id !== moduleId));
       } else {
@@ -183,6 +212,13 @@ export default function Modules( ) {
     }    
 
     const handleToggleSitIn = (moduleId: number) => {
+      if (currentBidRound === BidRound.NOT_STARTED) {
+        setSnackbarMessage("Bidding has not started yet.");
+        setSnackbarSeverity("error");
+        setSnackbarOpen(true);
+        return;
+      }
+
       if (sitInModules.includes(moduleId)) {
         setSitInModules(prev => prev.filter(id => id !== moduleId));
       } else {
@@ -198,7 +234,7 @@ export default function Modules( ) {
       return total.toFixed(1);
     };
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (needCheck: boolean = true) => {
       if (!programId || !academicYearId || !selectedRouteId) return;
   
       const validation = validateSelections();
@@ -208,12 +244,27 @@ export default function Modules( ) {
       }
   
       const { added, removed } = computeInsertAndRemoveModules();
+
+      //Check whether the dropped credit modules have been already bidded  
+      if (needCheck) {
+        const droppedSuccessModules = removed.filter((id) => {
+          const bid = bidResultMap[id];
+          return bid && bid.result === BidResult.SUCCESS;
+        });
+        if (droppedSuccessModules.length > 0) {
+          setModulesToDrop(droppedSuccessModules)
+          setConfirmDropOpen(true);
+          return
+        }
+      }
+
       const payload = {
         status: SelectionStatus.COMPLETE,
         academic_year_id: academicYearId,
         route_id: selectedRouteId,
         added,
         removed,
+        bid_round: currentBidRound,
       }
   
       try {
@@ -249,6 +300,7 @@ export default function Modules( ) {
         route_id: selectedRouteId,
         added,
         removed,
+        bid_round: currentBidRound,
       };
 
       try {
@@ -306,7 +358,8 @@ export default function Modules( ) {
     const allowSitIn = settings[SettingKeys.ENABLE_SIT_IN]?.value === 'true'
     const firstRoundStart = settings[SettingKeys.FIRST_ROUND_START_DATE]?.value 
     const firstRoundEnd = settings[SettingKeys.FIRST_ROUND_END_DATE]?.value
-    const currentBidRound = settings[SettingKeys.CURRENT_BID_ROUND]?.value
+    const secondRoundStart = settings[SettingKeys.SECOND_ROUND_START_DATE]?.value
+    const secondRoundEnd = settings[SettingKeys.SECOND_ROUND_END_DATE]?.value
     
     return (
       <Box sx={{ backgroundColor: '#f9fafb', minHeight: '100vh' }}>
@@ -338,6 +391,15 @@ export default function Modules( ) {
                     {formatDate(firstRoundStart)} – {formatDate(firstRoundEnd)}
                   </span>
                 </Typography>
+              )}
+
+              {secondRoundStart && secondRoundEnd && (
+                <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 2 }}>
+                  2nd Round credit registration period:
+                  <span style={{ fontStyle: 'italic', fontWeight: 400, marginLeft: 4 }}>
+                    {formatDate(secondRoundStart)} – {formatDate(secondRoundEnd)}
+                  </span>
+                </Typography>                
               )}
 
               <Typography variant="body1">
@@ -416,12 +478,6 @@ export default function Modules( ) {
             <Tabs
               value={selectedRouteId || false}
               onChange={(_, newValue) => {
-                if (currentBidRound !== BidRound.NOT_STARTED) {
-                  setSnackbarOpen(true)
-                  setSnackbarSeverity('error')
-                  setSnackbarMessage('Cannot change route after bidding start')
-                  return
-                }
                 setSelectedRouteId(newValue)
               }}
               variant="scrollable"
@@ -442,6 +498,7 @@ export default function Modules( ) {
                   <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Group</TableCell>
                   <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Code</TableCell>
                   <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Title</TableCell>
+                  <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Bid Result</TableCell>
                   <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Term</TableCell>
                   <TableCell rowSpan={2} sx={{ fontWeight: 'bold' }}>Credits</TableCell>
                   <TableCell colSpan={allowSitIn ? 2 : 1} align="center" sx={{ fontWeight: 'bold', borderBottom: '2px solid' }}>Subscription Level</TableCell>
@@ -480,6 +537,38 @@ export default function Modules( ) {
                             >
                               {module.title}
                             </Button>
+                          </TableCell>
+                          <TableCell sx={highlightStyle}>
+                            {bidResultMap[module.id] ? (
+                              <Box
+                                sx={{
+                                  display: 'inline-block',
+                                  textAlign: 'center',
+                                  minWidth: 90,
+                                  px: 1.5,
+                                  py: 0.5,
+                                  borderRadius: 1,
+                                  fontSize: '0.75rem',
+                                  fontWeight: 'bold',
+                                  color: 'white',
+                                  backgroundColor:
+                                    bidResultMap[module.id].result === BidResult.SUCCESS
+                                      ? '#2e7d32' // green
+                                      : bidResultMap[module.id].result === BidResult.WAITLIST
+                                      ? '#f9a825' // amber
+                                      : bidResultMap[module.id].result === BidResult.DROP
+                                      ? '#c62828' // red
+                                      : '#9e9e9e', // grey default
+                                }}
+                              >
+                                {bidResultMap[module.id].result}
+                                {bidResultMap[module.id].result === BidResult.WAITLIST &&
+                                  typeof bidResultMap[module.id].rank === 'number' &&
+                                  `: ${bidResultMap[module.id].rank}`}
+                              </Box>
+                            ) : (
+                              ''
+                            )}
                           </TableCell>
                           <TableCell sx={highlightStyle}>{module.term}</TableCell>
                           <TableCell sx={{ ...highlightStyle }} align="left">
@@ -536,7 +625,7 @@ export default function Modules( ) {
           {routeData && (
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
               <Button variant="outlined" onClick={handleTemperorySave}>Save</Button>
-              <Button variant="contained" color="success" onClick={handleSubmit}>Submit</Button>
+              <Button variant="contained" color="success" onClick={() => handleSubmit()}>Submit</Button>
             </Box>
           )}
 
@@ -642,6 +731,47 @@ export default function Modules( ) {
                 Close
               </Button>
             </DialogActions>
+          </Dialog>
+
+          <Dialog open={confirmDropOpen} onClose={() => { setConfirmDropOpen(false) }}>
+            <DialogTitle>Confirm Module Drop</DialogTitle>
+            <DialogContent>
+              <Typography sx={{ mb: 1 }}>
+                You are about to drop the following module(s) you have already been allocated a place in:
+              </Typography>
+  
+              <Box component="ul" sx={{ pl: 3, mb: 2, listStyle: 'disc', listStylePosition: 'inside' }}>
+                {modulesToDrop.map(id => {
+                  const module = routeData?.rules.flatMap(r => r.modules).find(m => m.id === id);
+                  return (
+                    <li key={id}>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        {module?.title ?? `Module ${id}`}
+                      </Typography>
+                    </li>
+                  );
+                })}
+              </Box>
+
+              <Typography color="error" sx={{ fontStyle: 'italic' }}>
+                Note!! This operation <strong>cannot</strong> be undone and you will give up your place
+              </Typography>
+            </DialogContent>
+
+            <DialogActions>
+              <Button onClick={() => setConfirmDropOpen(false)}>Cancel</Button>
+              <Button
+                color="error"
+                variant="contained"
+                onClick={async () => {
+                  setConfirmDropOpen(false);
+                  await handleSubmit(false);
+                }}
+              >
+                Confirm Drop
+              </Button>
+            </DialogActions>
+            
           </Dialog>
         </Container>
       </Box>

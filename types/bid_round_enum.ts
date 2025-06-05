@@ -1,7 +1,7 @@
 export const BidRound = {
     ROUND1: 'ROUND1',
     ROUND2: 'ROUND2',
-    DROP: 'DROP',
+    NOT_STARTED: 'NOT_STARTED',
 } as const
 
 export type BidRound = keyof typeof BidRound;
