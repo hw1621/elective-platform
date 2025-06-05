@@ -229,13 +229,12 @@ enum BidResult {
   PENDING
   SUCCESS
   WAITLIST
-  FAILED
+  DROPPED
 }
 
 enum BidRound {
   ROUND1
   ROUND2
-  NOT_STARTED
 }
 
 model module_selection_result {
@@ -247,8 +246,8 @@ model module_selection_result {
   register_level                   RegisterLevel
   bid_points        Int            @default(0)
   is_compulsory     Boolean        @default(false)
-  bid_result        BidResult?
-  bid_round         BidRound       @default(NOT_STARTED)
+  bid_result        BidResult      @default(PENDING)
+  bid_round         BidRound       @default(ROUND1)
   
   created_at       DateTime        @default(now())
   modified_at      DateTime        @default(now()) @updatedAt
