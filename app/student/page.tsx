@@ -228,7 +228,10 @@ export default function Modules( ) {
     };
 
     const calculateGroupECTS = (modules: Module[]) => {
-      const filtered = modules.filter((module) => selectedModules.includes(module.id));
+      const filtered = modules.filter((module) => 
+        selectedModules.includes(module.id) &&
+        !(bidResultMap[module.id]?.result === BidResult.WAITLIST)
+    );
       if (!filtered.length) return '0.0';
       const total = filtered.reduce((sum, m) => sum + (Number(m.ects) || 0), 0);
       return total.toFixed(1);
@@ -329,7 +332,11 @@ export default function Modules( ) {
       if (!routeData?.rules) return { valid: true};
 
       for (const rule of routeData.rules) {
-        const selected = rule.modules.filter(m => selectedModules.includes(m.id))
+        if (rule.is_compulsory) continue
+        const selected = rule.modules.filter(m => 
+          selectedModules.includes(m.id) && 
+          bidResultMap[m.id]?.result !== BidResult.WAITLIST
+        )
         const total = selected.reduce((sum, m) => sum + (Number(m.ects) || 0), 0);
         const min = rule.min_ects ?? 0;
         const max = rule.max_ects ?? Infinity;
