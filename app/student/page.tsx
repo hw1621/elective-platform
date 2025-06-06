@@ -286,6 +286,16 @@ export default function Modules( ) {
           setSnackbarMessage("Final selections submitted successfully.");
           setSnackbarSeverity('success')
           setSnackbarOpen(true);
+          setBidResultMap((prev) => {
+            const newMap = { ...prev };
+            added.forEach((entry: { module_id: number }) => {
+              newMap[entry.module_id] = { result: BidResult.PENDING };
+            });
+            [...removedCredit].forEach((moduleId: number) => {
+              delete newMap[moduleId];
+            });
+            return newMap;
+          });
         }
       } catch (error) {
         alert("Failed to submit module selections: " + (error as Error).message);
