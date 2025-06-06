@@ -91,7 +91,7 @@ export async function GET() {
       }
     }
 
-    const bidResult = records.map((r) => ({
+    const bidResult = records.filter((r) => r.register_level === RegisterLevel.CREDIT).map((r) => ({
       module_id: r.module_id,
       bid_result: r.bid_result,
       ...(r.bid_result === BidResult.WAITLIST && waitlistPositionMap[r.module_id]
