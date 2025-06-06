@@ -208,7 +208,7 @@ export default function Modules( ) {
       const addedSitIn = sitInModules.filter(id => !initialSitInModules.includes(id)).map(id => ({ module_id: id, register_level: RegisterLevel.SITIN }));
       const removedSitIn = initialSitInModules.filter(id => !sitInModules.includes(id));
 
-      return { added: [...addedCredit, ...addedSitIn], removed: [...removedCredit, ...removedSitIn] };
+      return { added: [...addedCredit, ...addedSitIn], removedSitIn: removedSitIn, removedCredit: removedCredit };
     }    
 
     const handleToggleSitIn = (moduleId: number) => {
@@ -246,11 +246,11 @@ export default function Modules( ) {
         return;
       }
   
-      const { added, removed } = computeInsertAndRemoveModules();
+      const { added, removedSitIn, removedCredit } = computeInsertAndRemoveModules();
 
       //Check whether the dropped credit modules have been already bidded  
       if (needCheck) {
-        const droppedSuccessModules = removed.filter((id) => {
+        const droppedSuccessModules = removedCredit.filter((id) => {
           const bid = bidResultMap[id];
           return bid && bid.result === BidResult.SUCCESS;
         });
@@ -266,7 +266,8 @@ export default function Modules( ) {
         academic_year_id: academicYearId,
         route_id: selectedRouteId,
         added,
-        removed,
+        removedSitIn,
+        removedCredit,
         bid_round: currentBidRound,
       }
   
@@ -296,13 +297,14 @@ export default function Modules( ) {
         return;
       }
 
-      const { added, removed } = computeInsertAndRemoveModules();
+      const { added, removedSitIn, removedCredit } = computeInsertAndRemoveModules();
       const payload = {
         status: SelectionStatus.IN_PROGRESS,
         academic_year_id: academicYearId,
         route_id: selectedRouteId,
         added,
-        removed,
+        removedSitIn: removedSitIn,
+        removedCredit: removedCredit,
         bid_round: currentBidRound,
       };
 

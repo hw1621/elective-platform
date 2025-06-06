@@ -70,22 +70,24 @@ export async function GET() {
       .map(r => r.module_id);
 
     const waitlistPositionMap: Record<number, number> = {};
-    if (waitlistedModuleIds.length > 0) {
-      const waitlistEntries = await prisma.wait_list.findMany({
+    for (const moduleId of waitlistedModuleIds) {
+      const waitlist = await prisma.wait_list.findMany({
         where: {
-          student_id: student.id,
-          module_id: { in: waitlistedModuleIds },
+          module_id: moduleId,
           academic_year_id: student.academic_year_id,
           deleted_at: null,
         },
+        orderBy: {
+          bid_points: 'desc',
+        },
         select: {
-          module_id: true,
-          position: true,
+          student_id: true,
         },
       });
 
-      for (const entry of waitlistEntries) {
-        waitlistPositionMap[entry.module_id] = entry.position;
+      const position = waitlist.findIndex(w => w.student_id === student.id);
+      if (position >= 0) {
+        waitlistPositionMap[moduleId] = position + 1;
       }
     }
 
@@ -136,7 +138,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { status, academic_year_id, route_id, added, removed, bid_round } = body;
+        const { status, academic_year_id, route_id, added, removedSitIn, removedCredit, bid_round } = body;
         if (!academic_year_id || !route_id || !status || !bid_round) {
             return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
         } 
@@ -156,7 +158,7 @@ export async function POST(req: NextRequest) {
           });
         });
 
-        const softDeletes = removed.map((moduleId: number) => {
+        const softDeletes = [...removedSitIn, ...removedCredit].map((moduleId: number) => {
           return prisma.module_selection_result.updateMany({
             where: {
               student_id: student.id,
@@ -179,6 +181,50 @@ export async function POST(req: NextRequest) {
           }
         })
         await prisma.$transaction([...softDeletes, ...inserts, updateStudent]);
+
+        //If the dropped modules have been allocated to current student
+        //Then promote student on wait-list
+        const droppedSuccessModules = removedCredit;
+        for (const moduleId of droppedSuccessModules) {
+          const topWaiter = await prisma.wait_list.findFirst({
+            where: {
+              module_id: moduleId,
+              academic_year_id,
+              deleted_at: null
+            },
+            orderBy: {
+              bid_points: 'desc'
+            },
+            select: {
+              id: true,
+              student_id: true,
+            }
+          })
+          if (topWaiter) {
+            await prisma.$transaction([
+              //Remove the first waiter from wait-list
+              prisma.wait_list.update({
+                where: {
+                  id: topWaiter.id,
+                },
+                data: {
+                  deleted_at: new Date()
+                }
+              }),
+              prisma.module_selection_result.updateMany({
+                where: {
+                  student_id: topWaiter.student_id,
+                  deleted_at: null,
+                  module_id: moduleId,
+                  academic_year_id: academic_year_id,
+                }, 
+                data: {
+                  bid_result: 'SUCCESS'
+                }
+              })
+            ])
+          }
+        }
 
         return NextResponse.json({
             success: true
