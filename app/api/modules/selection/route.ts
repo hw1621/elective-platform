@@ -13,18 +13,21 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-      const fullModules = await prisma.wait_list.findMany({
+      const successCounts = await prisma.module_selection_result.groupBy({
+        by: ['module_id'],
         where: {
+          academic_year_id: Number(academicYearId),
+          bid_result: 'SUCCESS',
           deleted_at: null,
-          academic_year_id: Number(academicYearId)
         },
-        select: {
-          module_id: true,
-        }
-      })
+        _count: true,
+      });
 
-      const fullModuleIds = new Set(fullModules.map(m => m.module_id));
-      console.log(fullModuleIds)
+      const countMap = new Map<number, number>();
+      successCounts.forEach((item) => {
+        countMap.set(item.module_id, item._count);
+      });
+
       const routeInfo = await prisma.route.findUnique({
         where: {
           id: parseInt(routeId),
@@ -66,6 +69,7 @@ export async function GET(request: NextRequest) {
                           module_content: true,
                           reading_list: true,
                           assessment: true,
+                          capacity: true,
                         }
                       }
                     }
@@ -95,7 +99,7 @@ export async function GET(request: NextRequest) {
           is_compulsory: rule.is_compulsory,
           modules: rule.module_group.mappings.map((mapping) => ({
             allow_sit_in: mapping.allow_sit_in,
-            is_full: fullModuleIds.has(mapping.module.id),
+            is_full: (countMap.get(mapping.module.id) ?? 0) >= mapping.module.capacity,
             ...mapping.module,
           })),
         }))
