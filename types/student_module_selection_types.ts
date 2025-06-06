@@ -12,6 +12,7 @@ export type Module = {
     module_content: string,
     reading_list: string,
     assessment: string,
+    is_full: boolean,
 }
 
 export type Rule = {

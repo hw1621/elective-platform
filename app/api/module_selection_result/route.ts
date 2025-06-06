@@ -98,8 +98,6 @@ export async function GET() {
       )
     }))
 
-    console.log(bidResult)
-
     return NextResponse.json({
       success: true,
       data: {

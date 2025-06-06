@@ -94,7 +94,7 @@ export default function Modules( ) {
       if (!selectedRouteId) return;
   
       const loadData = async () => {
-        const res = await fetch(`/api/modules/selection?route_id=${selectedRouteId}`);
+        const res = await fetch(`/api/modules/selection?route_id=${selectedRouteId}&&academic_year_id=${academicYearId}`);
         const body = await res.json();
         if (!body.success) {
           alert("Failed to fetch module groups and selections");
@@ -587,7 +587,7 @@ export default function Modules( ) {
                               <Checkbox
                                 checked={sitInModules.includes(module.id)}
                                 onChange={() => handleToggleSitIn(module.id)}
-                                disabled={!module.allow_sit_in || rule.is_compulsory}
+                                disabled={!module.allow_sit_in || rule.is_compulsory || module.is_full}
                               />
                             </TableCell>
                           )}
@@ -595,7 +595,7 @@ export default function Modules( ) {
                             <Checkbox
                               checked={selectedModules.includes(module.id)}
                               onChange={() => handleToggleModule(module.id)}
-                              disabled={rule.is_compulsory}
+                              disabled={rule.is_compulsory || module.is_full}
                             />
                           </TableCell>
                         </TableRow>

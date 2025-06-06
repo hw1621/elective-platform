@@ -6,12 +6,25 @@ const prisma = new PrismaClient();
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const routeId = searchParams.get('route_id')
+    const academicYearId = searchParams.get('academic_year_id')
 
-    if (!routeId) {
+    if (!routeId || !academicYearId) {
       return NextResponse.json({ error: "Missing route_id"}, { status: 400 });
     }
 
     try {
+      const fullModules = await prisma.wait_list.findMany({
+        where: {
+          deleted_at: null,
+          academic_year_id: Number(academicYearId)
+        },
+        select: {
+          module_id: true,
+        }
+      })
+
+      const fullModuleIds = new Set(fullModules.map(m => m.module_id));
+      console.log(fullModuleIds)
       const routeInfo = await prisma.route.findUnique({
         where: {
           id: parseInt(routeId),
@@ -82,6 +95,7 @@ export async function GET(request: NextRequest) {
           is_compulsory: rule.is_compulsory,
           modules: rule.module_group.mappings.map((mapping) => ({
             allow_sit_in: mapping.allow_sit_in,
+            is_full: fullModuleIds.has(mapping.module.id),
             ...mapping.module,
           })),
         }))
