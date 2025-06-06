@@ -145,8 +145,23 @@ export async function POST(req: NextRequest) {
 
         const now = new Date();
         const inserts = added.map((entry: { module_id: number; register_level: RegisterLevel, is_compulsory: boolean }) => {
-          return prisma.module_selection_result.create({
-            data: {
+          return prisma.module_selection_result.upsert({
+            where: {
+              student_id_module_id_academic_year_id: {
+                student_id: student.id,
+                module_id: entry.module_id,
+                academic_year_id,
+              },
+            },
+            update: {
+              register_level: entry.register_level,
+              is_compulsory: entry.is_compulsory ?? false,
+              bid_round: bid_round,
+              route_id,
+              modified_at: now,
+              deleted_at: null,
+            },
+            create: {
               student_id: student.id,
               module_id: entry.module_id,
               register_level: entry.register_level,
@@ -154,6 +169,7 @@ export async function POST(req: NextRequest) {
               is_compulsory: entry.is_compulsory ?? false,
               route_id,
               bid_round: bid_round,
+              deleted_at: null,
             },
           });
         });

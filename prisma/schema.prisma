@@ -258,6 +258,8 @@ model module_selection_result {
   route         route           @relation(fields: [route_id], references: [id])
   student       student         @relation(fields: [student_id], references: [id])
   module        module          @relation(fields: [module_id], references: [id])
+
+  @@unique([student_id, module_id, academic_year_id])
   
 }
 
