@@ -267,7 +267,6 @@ model wait_list {
   module_id         Int
   academic_year_id  Int
   bid_points        Int
-  position          Int
   
   created_at       DateTime        @default(now())
   modified_at      DateTime        @default(now()) @updatedAt
