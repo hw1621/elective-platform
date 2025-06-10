@@ -33,31 +33,31 @@ export async function GET() {
       return NextResponse.json({ success: false, message: "Student hasn't chosen route yet" }, { status: 404 });
     }
 
-    const compulsoryModuleIds = await prisma.rule.findMany({
-      where: {
-        route_id: student.route_id,
-        program_id: student.program_id,
-        is_compulsory: true,
-        deleted_at: null,
-      },
-      select: {
-        module_group: {
-          select: {
-            mappings: {
-              where: {
-                deleted_at: null
-              },
-              select: {
-                module_id: true,
+    const compulsoryModuleIds = (
+      await prisma.rule.findMany({
+        where: {
+          route_id: student.route_id,
+          program_id: student.program_id,
+          is_compulsory: true,
+          deleted_at: null,
+        },
+        select: {
+          module_group: {
+            select: {
+              mappings: {
+                where: {
+                  deleted_at: null
+                },
+                select: {
+                  module_id: true,
+                }
               }
             }
           }
         }
-      }
-    }).then(rules =>
-      rules.flatMap(rule =>
-        rule.module_group.mappings.map(mapping => mapping.module_id)
-      )
+      })
+    ).flatMap(rule =>
+      rule.module_group?.mappings?.map(mapping => mapping.module_id) ?? []
     );
     
     console.log(compulsoryModuleIds)

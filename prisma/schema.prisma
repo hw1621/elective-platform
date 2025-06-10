@@ -100,7 +100,7 @@ enum term {
 model rule {
   id                Int     @id @default(autoincrement())
   program_id        Int   
-  module_group_id   Int  
+  module_group_id   Int?  
   academic_year_id  Int 
   route_id          Int
 
@@ -113,7 +113,7 @@ model rule {
 
   academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
   program       program         @relation(fields: [program_id], references: [id])
-  module_group  module_group    @relation(fields: [module_group_id], references: [id])
+  module_group  module_group?    @relation(fields: [module_group_id], references: [id])
   route         route           @relation(fields: [route_id], references: [id])
 }
 
