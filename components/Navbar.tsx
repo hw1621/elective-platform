@@ -20,7 +20,6 @@ export default function Navbar({ role }: NavbarProps) {
   const studentLinks = [
     { href: '/student', label: 'Select Modules' },
     { href: '/student/bidding', label: 'Allocate Bids' },
-    { href: '/student/allocation_result', label: 'View Results' },
   ];
 
   const adminLinks = [
@@ -29,7 +28,6 @@ export default function Navbar({ role }: NavbarProps) {
     { href: '/admin/staff', label: 'Staff' },
     { href: '/admin/modules', label: 'Modules' },
     { href: '/admin/config', label: 'Configuration' },
-    { href: '/admin/reports', label: 'Reports' },
   ];
 
   const navLinks = role === 'admin' ? adminLinks : studentLinks;

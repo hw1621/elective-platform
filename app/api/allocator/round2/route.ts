@@ -4,7 +4,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function allocateSecondRoundBids() {
+export async function GET() {
     const academicYear = await prisma.academic_year.findFirst({
         where: {
           deleted_at: null,
