@@ -3,6 +3,7 @@ import { NextResponse, NextRequest} from "next/server";
 
 const prisma = new PrismaClient();
 
+//Find all modules and module groups of a route
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const routeId = searchParams.get('route_id')
@@ -39,6 +40,9 @@ export async function GET(request: NextRequest) {
           rules: {
             where: {
               deleted_at: null,
+              module_group_id: {
+                not: null 
+              },
             },
             select: {
               min_ects: true,
@@ -91,18 +95,20 @@ export async function GET(request: NextRequest) {
       const formatted = {
         route_id: routeInfo.id,
         route_name: routeInfo.name,
-        rules: routeInfo.rules.map((rule) => ({
-          min_ects: rule.min_ects,
-          max_ects: rule.max_ects,
-          module_group_id: rule.module_group.id,
-          module_group_name: rule.module_group.name,
-          is_compulsory: rule.is_compulsory,
-          modules: rule.module_group.mappings.map((mapping) => ({
-            allow_sit_in: mapping.allow_sit_in,
-            is_full: (countMap.get(mapping.module.id) ?? 0) >= mapping.module.capacity,
-            ...mapping.module,
-          })),
-        }))
+        rules: routeInfo.rules
+          .filter(rule => rule.module_group !== null)
+          .map((rule) => ({
+            min_ects: rule.min_ects,
+            max_ects: rule.max_ects,
+            module_group_id: rule.module_group!.id,
+            module_group_name: rule.module_group!.name,
+            is_compulsory: rule.is_compulsory,
+            modules: rule.module_group!.mappings.map((mapping) => ({
+              allow_sit_in: mapping.allow_sit_in,
+              is_full: (countMap.get(mapping.module.id) ?? 0) >= mapping.module.capacity,
+              ...mapping.module,
+            })),
+          }))
       };
       
       return NextResponse.json({

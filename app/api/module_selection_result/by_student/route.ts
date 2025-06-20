@@ -38,6 +38,9 @@ export async function GET() {
         where: {
           route_id: student.route_id,
           program_id: student.program_id,
+          module_group_id: {
+            not: null,
+          },          
           is_compulsory: true,
           deleted_at: null,
         },

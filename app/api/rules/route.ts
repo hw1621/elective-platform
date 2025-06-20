@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
             id: rule.id,
             program_id: rule.program_id,
             module_group_id: rule.module_group_id,
-            module_group_name: rule.module_group.name,
+            module_group_name: rule.module_group?.name,
             academic_year_id: rule.academic_year_id,
             route_id: rule.route_id,
             route_name: rule.route.name,
@@ -97,6 +97,13 @@ export async function PATCH(request: NextRequest) {
             }, { status: 404 });
         }
 
+        if (!rule.module_group_id) {
+            return NextResponse.json({
+              success: false,
+              message: "Rule has no module_group_id",
+            }, { status: 400 });
+        }
+        
         let isCompulsory = false
         if (min_ects === max_ects) {
             const groupModules = await prisma.module_group_mapping.findMany({

@@ -291,6 +291,27 @@ export function RouteSection({
                                         </div>
                                     </div>
                                 )}
+                                {/* Term-based Rules */}
+                                {["SP", "SU"].map((term, index) => (
+                                    <div key={index} className="border px-3 py-2 rounded-md bg-gray-50">
+                                    <div className="grid grid-cols-[2fr_300px_auto] items-center gap-4 text-sm">
+                                        <div className="font-medium text-gray-900">{term} Term</div>
+                                        
+                                        <div className="flex items-baseline space-x-2">
+                                            <span className="text-sm text-gray-500">Maximum electives allowed:</span>
+                                            <span className="text-lg text-gray-900 font-semibold">{3}</span>
+                                            </div>
+
+                                        
+                                        <div className="flex gap-2 justify-end">
+                                        <Button variant="outline" size="sm">Edit</Button>
+                                        <Button variant="destructive" size="sm">Delete</Button>
+                                        </div>
+                                    </div>
+                                    </div>
+
+                                ))}
+
                             </div>
                         </div>
                     )
