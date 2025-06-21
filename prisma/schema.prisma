@@ -110,6 +110,9 @@ model rule {
   created_at        DateTime    @default(now())
   modified_at       DateTime    @default(now()) @updatedAt
   deleted_at        DateTime?
+  type              RuleType    @default(ECTS)
+  max_module_count  Int?
+  term              String?
 
   academic_year academic_year   @relation(fields: [academic_year_id], references: [id])
   program       program         @relation(fields: [program_id], references: [id])
@@ -236,6 +239,11 @@ enum BidRound {
   ROUND1
   ROUND2
   NOT_STARTED
+}
+
+enum RuleType {
+  ECTS
+  TERM
 }
 
 model module_selection_result {
