@@ -1,3 +1,5 @@
+import { RuleType } from "./rule_type_enum";
+
 export type Rule = {
     id: number;
     program_id: number;
@@ -7,7 +9,10 @@ export type Rule = {
     route_id: number,
     route_name: string,
     min_ects: number,
-    max_ects: number
+    max_ects: number,
+    term: string,
+    max_module_count: number,
+    type: RuleType,
 }
 
 export type Route = {
