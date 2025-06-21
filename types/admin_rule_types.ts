@@ -55,3 +55,36 @@ export type ParsedImportRule = {
     }[];
     errors: string[];
 }
+
+export type CreateRulePayload = ECTSRuleCreationPayload | TermRuleCreationPayload;
+
+export interface ECTSRulePayload {
+    rule_id: number;
+    min_ects: number;
+    max_ects: number;
+}
+  
+export interface TermRulePayload {
+    rule_id: number;
+    term: string;
+    max_module_count: number;
+}
+  
+export interface ECTSRuleCreationPayload {
+    program_id: number;
+    route_id: number;
+    academic_year_id: number;
+    module_group_id: number;
+    min_ects: number;
+    max_ects: number;
+    type: RuleType
+}
+  
+export interface TermRuleCreationPayload {
+    program_id: number;
+    route_id: number;
+    academic_year_id: number;
+    term: string;
+    max_module_count: number;
+    type: RuleType;
+}

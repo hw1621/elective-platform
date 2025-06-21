@@ -1,3 +1,4 @@
+import { ECTSRulePayload, TermRulePayload, ECTSRuleCreationPayload, TermRuleCreationPayload } from "@/types/admin_rule_types";
 import { RuleType } from "@/types/rule_type_enum";
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
@@ -103,7 +104,7 @@ export async function PATCH(request: NextRequest) {
     }
 }
 
-async function updateECTSRule(body: any) {     
+async function updateECTSRule(body: ECTSRulePayload) {     
     const { rule_id, min_ects, max_ects } = body;
     if (!rule_id || typeof min_ects !== 'number' || typeof max_ects !== 'number') {
         return NextResponse.json({
@@ -170,7 +171,7 @@ async function updateECTSRule(body: any) {
     })   
 }
 
-async function updateTermRule(body: any) {
+async function updateTermRule(body: TermRulePayload) {
     const { rule_id, term, max_module_count } = body;
     if (!rule_id || typeof term !== 'string' || typeof max_module_count !== 'number') {
         return NextResponse.json({
@@ -223,7 +224,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
-async function handleEctsRuleCreation(body: any) {
+async function handleEctsRuleCreation(body: ECTSRuleCreationPayload) {
     const { program_id, route_id, module_group_id, academic_year_id, min_ects, max_ects, type } = body;
   
     if (
@@ -274,7 +275,7 @@ async function handleEctsRuleCreation(body: any) {
     return NextResponse.json({ success: true, data: newRule });
 }
   
-async function handleTermRuleCreation(body: any) {
+async function handleTermRuleCreation(body: TermRuleCreationPayload) {
     const { program_id, route_id, academic_year_id, term, max_module_count, type } = body;
     if (
         !program_id ||

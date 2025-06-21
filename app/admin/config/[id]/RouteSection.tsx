@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ModuleGroup, Route, Rule } from "@/types/admin_rule_types";
+import { CreateRulePayload, ModuleGroup, Route, Rule } from "@/types/admin_rule_types";
 import { RuleType } from "@/types/rule_type_enum";
 import { useState } from "react";
 
@@ -93,7 +93,7 @@ export function RouteSection({
     
     const handleCreateRouteRule = async (routeId: number) => {
         try {
-            let body: any = {
+            let body: Partial<CreateRulePayload> = {
                 program_id: programId,
                 route_id: routeId,
                 academic_year_id,
@@ -176,7 +176,7 @@ export function RouteSection({
             console.error("Failed to create rule:", error);
             alert("Failed to create rule, please try again.");
         }
-      };
+    };
       
 
     const handleDeleteRouteRule = async (ruleId: number) => {
