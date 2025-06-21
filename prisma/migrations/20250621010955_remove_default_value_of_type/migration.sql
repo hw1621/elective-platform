@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "rule" ALTER COLUMN "type" DROP DEFAULT;

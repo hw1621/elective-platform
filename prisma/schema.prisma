@@ -110,7 +110,7 @@ model rule {
   created_at        DateTime    @default(now())
   modified_at       DateTime    @default(now()) @updatedAt
   deleted_at        DateTime?
-  type              RuleType    @default(ECTS)
+  type              RuleType
   max_module_count  Int?
   term              String?
 
