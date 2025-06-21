@@ -1,3 +1,4 @@
+import { RuleType } from "@/types/rule_type_enum";
 import { PrismaClient } from "@prisma/client";
 import { NextResponse, NextRequest } from "next/server";
 
@@ -46,6 +47,9 @@ export async function GET(request: NextRequest) {
             module_group_id: rule.module_group_id,
             module_group_name: rule.module_group?.name,
             academic_year_id: rule.academic_year_id,
+            term: rule.term,
+            max_module_count: rule.max_module_count,
+            type: rule.type,
             route_id: rule.route_id,
             route_name: rule.route.name,
             min_ects: rule.min_ects,
@@ -75,73 +79,21 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
-        const { rule_id, min_ects, max_ects } = body;
-        if (typeof min_ects !== 'number' 
-            || typeof max_ects !== 'number'
-        ) {
-            return NextResponse.json({
-                success: false,
-                message: "Invalid min_ects or max_ects"
-            }, { status: 400 })
-        }
-        
-        const rule = await prisma.rule.findUnique({
-            where: { id: rule_id },
-            select: { module_group_id: true },
-        });
+        const { type } = body;
+        console.log(body)
 
-        if (!rule) {
-            return NextResponse.json({
-                success: false,
-                message: "Rule not found",
-            }, { status: 404 });
+        if (!type || !["ECTS", "TERM"].includes(type)) {
+            return NextResponse.json(
+                { success: false, message: "Parameters missing rule type" },
+                { status: 400 }
+            );
         }
 
-        if (!rule.module_group_id) {
-            return NextResponse.json({
-              success: false,
-              message: "Rule has no module_group_id",
-            }, { status: 400 });
+        if (type === RuleType.ECTS) {
+            return await updateECTSRule(body);
+        } else if (type === RuleType.TERM) {
+            return await updateTermRule(body);
         }
-        
-        let isCompulsory = false
-        if (min_ects === max_ects) {
-            const groupModules = await prisma.module_group_mapping.findMany({
-                where: {
-                    module_group_id: rule.module_group_id,
-                    deleted_at: null,
-                    module: {
-                        deleted_at: null,
-                    }
-                },
-                include: {
-                    module: {
-                        select: {
-                            ects: true,
-                        }
-                    }
-                }
-            })
-            const totalEcts = groupModules.reduce((sum, m) => sum + Number(m.module.ects), 0)
-            isCompulsory = totalEcts === max_ects
-        }
-
-        const updatedRule = await prisma.rule.update({
-            where: {
-                id: rule_id,
-            },
-            data: {
-                min_ects,
-                max_ects,
-                is_compulsory: isCompulsory,
-            },
-        });
-    
-        return NextResponse.json({
-            success: true,
-            data: updatedRule,
-            message: "Rule updated successfully"
-        }, { status: 200 })
     } catch (error) {
         console.error("[PATCH /api/rules] Error updateing rule: ", error);
         return NextResponse.json({
@@ -151,60 +103,115 @@ export async function PATCH(request: NextRequest) {
     }
 }
 
+async function updateECTSRule(body: any) {     
+    const { rule_id, min_ects, max_ects } = body;
+    if (!rule_id || typeof min_ects !== 'number' || typeof max_ects !== 'number') {
+        return NextResponse.json({
+            success: false,
+            message: "Invalid min_ects or max_ects for ECTS rule update"
+        }, { status: 400 })
+    }
+    
+    const rule = await prisma.rule.findUnique({
+        where: { id: rule_id },
+        select: { module_group_id: true },
+    });
+
+    if (!rule) {
+        return NextResponse.json({
+            success: false,
+            message: "No rule found in update ECTS rule",
+        }, { status: 404 });
+    }
+
+    if (!rule.module_group_id) {
+        return NextResponse.json({
+          success: false,
+          message: "Cannot update ECTS rule: module_group_id is missing on the ECTS rule",
+        }, { status: 400 });
+    }
+    
+    let isCompulsory = false
+    if (min_ects === max_ects) {
+        const groupModules = await prisma.module_group_mapping.findMany({
+            where: {
+                module_group_id: rule.module_group_id,
+                deleted_at: null,
+                module: {
+                    deleted_at: null,
+                }
+            },
+            include: {
+                module: {
+                    select: {
+                        ects: true,
+                    }
+                }
+            }
+        })
+        const totalEcts = groupModules.reduce((sum, m) => sum + Number(m.module.ects), 0)
+        isCompulsory = totalEcts === max_ects
+    }
+
+    const updatedTermRule = await prisma.rule.update({
+        where: {
+            id: rule_id,
+        },
+        data: {
+            min_ects,
+            max_ects,
+            is_compulsory: isCompulsory,
+        },
+    });
+
+    return NextResponse.json({
+        success: true,
+        data: updatedTermRule,
+    })   
+}
+
+async function updateTermRule(body: any) {
+    const { rule_id, term, max_module_count } = body;
+    if (!rule_id || typeof term !== 'string' || typeof max_module_count !== 'number') {
+        return NextResponse.json({
+            success: false,
+            message: "Invalid parameters for term rule update"
+        }, { status: 400 });
+    }
+
+    const updatedTermRule =  await prisma.rule.update({
+        where: { id: rule_id },
+        data: {
+            term,
+            max_module_count,
+        },
+    });
+
+    return NextResponse.json({
+        success: true,
+        data: updatedTermRule,
+    });
+}
+
+
 //Insert new rules 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { program_id, route_id, module_group_id, academic_year_id, min_ects, max_ects } = body
-        if (
-            !program_id ||
-            !route_id ||
-            !module_group_id ||
-            !academic_year_id ||
-            min_ects === undefined ||
-            max_ects === undefined
-        ) {
+        const { type } = body;
+        
+        if (!type || !["ECTS", "TERM"].includes(type)) {
             return NextResponse.json(
-                { success: false, message: "Missing or invalid rule parameters"}
-            )
-        } 
-
-        let isCompulsory = false
-        if (min_ects === max_ects) {
-            const moduleGroupModules = await prisma.module_group_mapping.findMany({
-                where: {
-                    module_group_id,
-                    deleted_at: null
-                },
-                include: {
-                    module: {
-                        select: {
-                            ects: true
-                        }
-                    }
-                }
-            })
-
-            const totalEcts = moduleGroupModules.reduce((sum, m) => sum + Number(m.module.ects), 0)
-            isCompulsory = min_ects === totalEcts;
+                { success: false, message: "Update missing rule type" },
+                { status: 400 }
+            );
         }
 
-        const newRule = await prisma.rule.create({
-            data: {
-                program_id,
-                route_id,
-                module_group_id,
-                academic_year_id,
-                min_ects,
-                max_ects,
-                is_compulsory: isCompulsory,
-            }
-        })
-
-        return NextResponse.json({
-            success: true,
-            data: newRule,
-        })
+        if (type === RuleType.ECTS) {
+            return await handleEctsRuleCreation(body);
+        } else if (type === RuleType.TERM) {
+            return await handleTermRuleCreation(body);
+        } 
     } catch (error) {
         console.error("[POST /api/rules] Failed to create route rule:", error);
         return NextResponse.json(
@@ -215,6 +222,88 @@ export async function POST(request: NextRequest) {
         );
     }
 }
+
+async function handleEctsRuleCreation(body: any) {
+    const { program_id, route_id, module_group_id, academic_year_id, min_ects, max_ects, type } = body;
+  
+    if (
+        !program_id ||
+        !route_id ||
+        !module_group_id ||
+        !academic_year_id ||
+        min_ects === undefined ||
+        max_ects === undefined
+    ) {
+        return NextResponse.json(
+            { success: false, message: "Missing or invalid ECTS rule parameters" },
+            { status: 400 }
+        );
+    }
+  
+    let isCompulsory = false;
+    if (min_ects === max_ects) {
+        const moduleGroupModules = await prisma.module_group_mapping.findMany({
+            where: {
+            module_group_id,
+            deleted_at: null,
+            },
+            include: {
+            module: {
+                select: { ects: true },
+            },
+            },
+        });
+  
+        const totalEcts = moduleGroupModules.reduce((sum, m) => sum + Number(m.module.ects), 0);
+        isCompulsory = min_ects === totalEcts;
+    }
+  
+    const newRule = await prisma.rule.create({
+        data: {
+            program_id,
+            route_id,
+            module_group_id,
+            academic_year_id,
+            min_ects,
+            max_ects,
+            is_compulsory: isCompulsory,
+            type,
+        },
+    });
+  
+    return NextResponse.json({ success: true, data: newRule });
+}
+  
+async function handleTermRuleCreation(body: any) {
+    const { program_id, route_id, academic_year_id, term, max_module_count, type } = body;
+    if (
+        !program_id ||
+        !route_id ||
+        !academic_year_id ||
+        !term ||
+        max_module_count === undefined
+    ) {
+        return NextResponse.json(
+        { success: false, message: "Missing or invalid Term rule parameters" },
+        { status: 400 }
+        );
+    }
+
+    const newTermRule = await prisma.rule.create({
+        data: {
+        program_id,
+        route_id,
+        academic_year_id,
+        type,
+        term,
+        max_module_count,
+        },
+    });
+
+    return NextResponse.json({ success: true, data: newTermRule });
+}
+  
+
 
 export async function DELETE(request: NextRequest) {
     try {
