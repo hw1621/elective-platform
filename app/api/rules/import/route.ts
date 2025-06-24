@@ -125,6 +125,7 @@ export async function POST(req: NextRequest) {
                             module_group_id: groupId,
                             min_ects: rule.min_ects,
                             max_ects: rule.max_ects,
+                            type: rule.type,
                         }
                     })
                 }

@@ -1,4 +1,5 @@
 import { Module, Rule, ParsedImportRule } from '@/types/admin_rule_types';
+import { RuleType } from '@/types/rule_type_enum';
 import * as XLSX from 'xlsx';
 
 export type RawExcelRow = Record<string, any>;
@@ -127,7 +128,10 @@ export function exportProgramRulesToExcel(
     route_name: rule.route_name,
     group_name: rule.module_group_name,
     min_ects: rule.min_ects,
-    max_ects: rule.max_ects
+    max_ects: rule.max_ects,
+    type: rule.type,
+    term: rule.term,
+    max_module_count: rule.max_module_count,
   }))
 
   // create workbook
@@ -183,19 +187,34 @@ export function parseRuleExcel(buffer: Buffer, validModuleCodes: string[]): Pars
 
   rawRules.forEach((row, index) => {
     const rowNum = index + 2;
-    const { route_name, group_name, min_ects, max_ects } = row;
+    const { route_name, group_name, min_ects, max_ects, type, term, max_module_count } = row;
     const rawMin = Number(row.min_ects);
     const rawMax = Number(row.max_ects);
 
+    if (type !== RuleType.ECTS && type !== RuleType.TERM) {
+      errors.push(`Row ${rowNum}: Invalid rule type "${type}". Expected "ECTS" or "TERM".`);
+      return;
+    }
 
     if (
-      typeof route_name !== "string" ||
+      type === RuleType.ECTS && 
+      (typeof route_name !== "string" ||
       typeof group_name !== "string" ||
       isNaN(rawMin) ||
-      isNaN(rawMax)
+      isNaN(rawMax))
     ) {
       errors.push(`Row ${rowNum}: Missing or invalid fields 
-        (route_name: ${route_name}, group_name: ${group_name}, min_ects: ${min_ects}, max_ects: ${max_ects})`);
+        (route_name: ${route_name}, group_name: ${group_name}, min_ects: ${min_ects}, max_ects: ${max_ects}), type: ${type}`);
+      return;
+    }
+
+    if (type === RuleType.TERM &&
+      (typeof route_name !== "string" ||
+      isNaN(max_module_count) ||
+      typeof term !== "string")
+    ) {
+      errors.push(`Row ${rowNum}: Missing or invalid fields 
+        (route_name: ${route_name}, term: ${term}, max_module_count: ${max_module_count}), type: ${type}`);
       return;
     }
 
@@ -204,16 +223,19 @@ export function parseRuleExcel(buffer: Buffer, validModuleCodes: string[]): Pars
       return;
     }
 
-    if (!Object.prototype.hasOwnProperty.call(moduleGroups, group_name)) {
+    if (type === RuleType.ECTS && !Object.prototype.hasOwnProperty.call(moduleGroups, group_name)) {
       errors.push(`Row ${rowNum} in Rules sheet: Module group "${group_name}" not found in the module groups sheet`);
       return;
     }
 
     rules.push({
       route_name: route_name.trim(),
-      group_name: group_name.trim(),
+      group_name: group_name ? group_name.trim() : undefined,
       min_ects: rawMin,
       max_ects: rawMax,
+      type: type,
+      term: term,
+      max_module_count: max_module_count ? Number(max_module_count) : undefined,
     });
   });
 

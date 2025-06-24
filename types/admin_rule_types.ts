@@ -52,6 +52,9 @@ export type ParsedImportRule = {
         group_name: string,
         min_ects: number,
         max_ects: number,
+        type: RuleType,
+        term?: string,
+        max_module_count?: number,
     }[];
     errors: string[];
 }

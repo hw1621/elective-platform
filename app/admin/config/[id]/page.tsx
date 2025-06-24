@@ -15,6 +15,7 @@ import { ElectiveGroupSection } from "./ElectiveGroupSection";
 import { RouteSection } from "./RouteSection";
 import { SettingSection } from "./SettingSection";
 import { ModuleSitInOverview } from "./ModuleSitInOverview";
+import { RuleType } from "@/types/rule_type_enum";
 
 
 export default function ProgramRuleConfig() {
@@ -300,17 +301,32 @@ export default function ProgramRuleConfig() {
                                         <ul className="list-disc pl-5 space-y-1.5">
                                             {routeRules.map((rule, idx) => (
                                                 <li key={idx}>
-                                                    <div className="grid grid-cols-[1fr_140px_120px] gap-x-5 items-center">
-                                                        <span className="font-medium text-gray-900">{rule.group_name}</span>
-                                                        <div className="text-left">
-                                                        <span className="text-xs text-gray-500 mr-1">Min</span>
-                                                        <span className="font-semibold text-gray-900">{rule.min_ects}</span>
+                                                    {rule.type === RuleType.ECTS ? (
+                                                        <div className="grid grid-cols-[1fr_140px_120px] gap-x-5 items-center">
+                                                            <span className="font-medium text-gray-900">{rule.group_name}</span>
+                                                            <div className="text-left">
+                                                                <span className="text-xs text-gray-500 mr-1">Min</span>
+                                                                <span className="font-semibold text-gray-900">{rule.min_ects}</span>
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <span className="text-xs text-gray-500 mr-1">Max</span>
+                                                                <span className="font-semibold text-gray-900">{rule.max_ects}</span>
+                                                            </div>
                                                         </div>
-                                                        <div className="text-left">
-                                                        <span className="text-xs text-gray-500 mr-1">Max</span>
-                                                        <span className="font-semibold text-gray-900">{rule.max_ects}</span>
+                                                    ) : (
+                                                        <div className="grid grid-cols-[1fr_1fr] gap-x-5 items-center ml-1">
+                                                            <div className="text-left">
+                                                                <span className="text-xs text-gray-500 mr-1">Term</span>
+                                                                <span className="font-semibold text-gray-900">{rule.term ?? "N/A"}</span>
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <span className="text-xs text-gray-500 mr-1">Max module count</span>
+                                                                <span className="font-semibold text-gray-900">
+                                                                {rule.max_module_count ?? "N/A"}
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    )}
                                                 </li>
                                             ))}
                                         </ul>
