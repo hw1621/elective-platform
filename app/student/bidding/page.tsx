@@ -9,6 +9,7 @@ import { Box, Button, Container, Typography, Alert, LinearProgress, Snackbar } f
 
 import toast from 'react-hot-toast';
 import { RegisterLevel } from '@prisma/client';
+import { BidResult } from '@/types/bid_result_enum';
 
 export default function AllocateBids() {
   const [programId, setProgramId] = useState<number | null>(null);
@@ -197,6 +198,7 @@ export default function AllocateBids() {
           {selectedModules.filter(mod => mod.register_level === RegisterLevel.CREDIT).map((mod) => {
             const bid = bids[mod.id] || 0;
             const maxBid = Math.max(...Object.values(bids), 1);
+            const isEditable = mod.bid_result === BidResult.PENDING
 
             return (
               <Box
@@ -221,7 +223,7 @@ export default function AllocateBids() {
                     <Button
                       variant="outlined"
                       onClick={() => handleBidChange(mod.id, bid - 1)}
-                      disabled={isReadOnly || bid === 0}
+                      disabled={isReadOnly || bid === 0 || !isEditable}
                       sx={{ minWidth: 36, height: 36 }}
                       >
                         <Box component="span" sx={{ fontSize: '1.4rem', lineHeight: 1 }}>−</Box>
@@ -231,7 +233,7 @@ export default function AllocateBids() {
                       type="number"
                       value={bid}
                       onChange={(e) => handleBidChange(mod.id, Number(e.target.value))}
-                      disabled={isReadOnly}
+                      disabled={isReadOnly || !isEditable}
                       max={bids[mod.id] + (bidsLeft ?? 0)}
                       className="no-spinner"
                       style={{
@@ -249,7 +251,7 @@ export default function AllocateBids() {
                     <Button
                       variant="outlined"
                       onClick={() => handleBidChange(mod.id, bid + 1)}
-                      disabled={isReadOnly || (bidsLeft !== null && bidsLeft <= 0)}
+                      disabled={isReadOnly || (bidsLeft !== null && bidsLeft <= 0) || !isEditable}
                       sx={{ minWidth: 36, height: 36 }}
                       >
                         <Box component="span" sx={{ fontSize: '1.4rem', lineHeight: 1 }}>+</Box>

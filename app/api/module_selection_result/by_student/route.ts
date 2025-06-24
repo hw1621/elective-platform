@@ -76,6 +76,7 @@ export async function GET() {
       select: {
         register_level: true,
         bid_points: true,
+        bid_result: true,
         module: {
           select: {
             id: true,
@@ -96,6 +97,7 @@ export async function GET() {
       ects: r.module.ects,
       code: r.module.code,
       bid_points: r.bid_points,
+      bid_result: r.bid_result,
     }));
 
     console.log(result)
